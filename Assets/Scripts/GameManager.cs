@@ -12,9 +12,11 @@ public class GameManager : MonoBehaviour
 
     [Header("Speed")]
     public float currentSpeed = 0f;
-    public float startSpeed = 8f;
-    public float maxSpeed = 18f;
-    public float speedIncreasePerSecond = 0.15f;
+
+    [SerializeField] private float defaultSpeed = 10f;
+    [SerializeField] private float boostSpeed = 16f;
+    [SerializeField] private float brakeSpeed = 5f;
+    [SerializeField] private float speedChangeRate = 10f;
 
     [Header("Score")]
     public float distance = 0f;
@@ -25,6 +27,7 @@ public class GameManager : MonoBehaviour
 
     [Header("UI")]
     public TMP_Text scoreText;
+    public int driftScore = 0;
     public GameObject startText;
     public GameObject gameOverText;
 
@@ -42,6 +45,7 @@ public class GameManager : MonoBehaviour
         currentSpeed = 0f;
         distance = 0f;
         score = 0;
+        driftScore = 0;
         collectedParts = 0;
         bonusScore = 0;
 
@@ -87,7 +91,7 @@ public class GameManager : MonoBehaviour
     private void StartGame()
     {
         isGameStarted = true;
-        currentSpeed = startSpeed;
+        currentSpeed = defaultSpeed;
 
         if (startText != null)
         {
@@ -97,8 +101,22 @@ public class GameManager : MonoBehaviour
 
     private void UpdateSpeed()
     {
-        currentSpeed += speedIncreasePerSecond * Time.deltaTime;
-        currentSpeed = Mathf.Clamp(currentSpeed, startSpeed, maxSpeed);
+        float targetSpeed = defaultSpeed;
+
+        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
+        {
+            targetSpeed = boostSpeed;
+        }
+        else if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
+        {
+            targetSpeed = brakeSpeed;
+        }
+
+        currentSpeed = Mathf.MoveTowards(
+            currentSpeed,
+            targetSpeed,
+            speedChangeRate * Time.deltaTime
+        );
     }
 
     private void UpdateScore()
@@ -131,7 +149,24 @@ public class GameManager : MonoBehaviour
         scoreText.text =
             "Distance: " + Mathf.FloorToInt(distance) + " m\n" +
             "Parts: " + collectedParts + "\n" +
-            "Score: " + score;
+            "Score: " + score + "\n" +
+            "Drift Score: " + driftScore + "\n";
+    }
+    
+    public void AddDriftScore(int amount)
+    {
+        if (!isGameStarted || isGameOver)
+        {
+            return;
+        }
+
+        if (amount <= 0)
+        {
+            return;
+        }
+
+        driftScore += amount;
+        UpdateScoreUI();
     }
 
     public void GameOver()
@@ -157,6 +192,7 @@ public class GameManager : MonoBehaviour
                     "Distance: " + Mathf.FloorToInt(distance) + " m\n" +
                     "Parts: " + collectedParts + "\n" +
                     "Score: " + score + "\n" +
+                    "Drift Score: " + driftScore + "\n" +
                     "Press R to Restart";
             }
         }

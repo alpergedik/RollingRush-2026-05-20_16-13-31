@@ -12,7 +12,8 @@ public class ObstacleSpawner : MonoBehaviour
     [Header("Spawn Settings")]
     public float spawnZ = 65f;
     public float spawnY = 0f;
-    public float laneDistance = 3f;
+    public float minSpawnX = -4.2f;
+    public float maxSpawnX = 4.2f;
 
     [Header("Timing")]
     public float minSpawnInterval = 1.0f;
@@ -21,7 +22,7 @@ public class ObstacleSpawner : MonoBehaviour
     [Header("Movement")]
     public float obstacleSpeed = 8f;
 
-    private List<GameObject> obstaclePool = new List<GameObject>();
+    private readonly List<GameObject> obstaclePool = new List<GameObject>();
     private float spawnTimer;
     private float currentSpawnInterval;
 
@@ -79,8 +80,7 @@ public class ObstacleSpawner : MonoBehaviour
             return;
         }
 
-        int randomLane = Random.Range(-1, 2);
-        float xPosition = randomLane * laneDistance;
+        float xPosition = Random.Range(minSpawnX, maxSpawnX);
 
         obstacle.transform.position = new Vector3(xPosition, spawnY, spawnZ);
         obstacle.transform.rotation = Quaternion.identity;
