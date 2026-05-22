@@ -11,8 +11,8 @@ GameObject:
   - component: {fileID: 1573006239199196104}
   - component: {fileID: 2163712781308193597}
   - component: {fileID: 4304421554515716757}
-  - component: {fileID: 4520120485168620616}
   - component: {fileID: 1195374077507650079}
+  - component: {fileID: 4520120485168620616}
   m_Layer: 0
   m_Name: Obstacle_Block
   m_TagString: Obstacle
@@ -93,6 +93,20 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &1195374077507650079
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4355200390086549899}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5da92005f755e9d408650348e78825e1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ObstacleMover
+  moveSpeed: 8
+  disableZ: -20
 --- !u!65 &4520120485168620616
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -114,20 +128,6 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 1.2507677, y: 1, z: 1}
   m_Center: {x: -0.0080037415, y: 0, z: 0}
---- !u!114 &1195374077507650079
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 4355200390086549899}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5da92005f755e9d408650348e78825e1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ObstacleMover
-  moveSpeed: 8
-  disableZ: -20
 --- !u!1001 &4910633109733453122
 PrefabInstance:
   m_ObjectHideFlags: 0
