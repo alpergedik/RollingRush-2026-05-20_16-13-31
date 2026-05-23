@@ -5,9 +5,9 @@ Shader "Custom/CurvedWorldURP"
         _BaseColor ("Base Color", Color) = (1,1,1,1)
         _BaseMap ("Base Map", 2D) = "white" {}
 
-        _CurveStrength ("Curve Strength", Float) = 0.003
-        _CurveStartDistance ("Curve Start Distance", Float) = 8
-        _CurveSideStrength ("Side Curve Strength", Float) = 0
+        _CurveStrength ("Preview Curve Strength", Float) = 0.00025
+        _CurveStartDistance ("Preview Curve Start Distance", Float) = 10
+        _CurveSideStrength ("Preview Side Curve Strength", Float) = 0
     }
 
     SubShader
@@ -49,12 +49,17 @@ Shader "Custom/CurvedWorldURP"
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseColor;
                 float4 _BaseMap_ST;
+
                 float _CurveStrength;
                 float _CurveStartDistance;
                 float _CurveSideStrength;
             CBUFFER_END
 
             float4 _CurveOrigin;
+
+            float _GlobalCurveStrength;
+            float _GlobalCurveSideStrength;
+            float _GlobalCurveStartDistance;
 
             Varyings vert(Attributes input)
             {
@@ -63,12 +68,13 @@ Shader "Custom/CurvedWorldURP"
                 float3 worldPos = TransformObjectToWorld(input.positionOS.xyz);
 
                 float distanceZ = worldPos.z - _CurveOrigin.z;
-                float curveDistance = max(0, distanceZ - _CurveStartDistance);
+                float curveDistance = max(0, distanceZ - _GlobalCurveStartDistance);
 
-                float curveAmount = curveDistance * curveDistance * _CurveStrength;
+                float curveAmount = curveDistance * curveDistance * _GlobalCurveStrength;
+                float sideAmount = curveDistance * curveDistance * _GlobalCurveSideStrength;
 
                 worldPos.y -= curveAmount;
-                worldPos.x += curveDistance * curveDistance * _CurveSideStrength;
+                worldPos.x += sideAmount;
 
                 output.positionHCS = TransformWorldToHClip(worldPos);
                 output.uv = TRANSFORM_TEX(input.uv, _BaseMap);

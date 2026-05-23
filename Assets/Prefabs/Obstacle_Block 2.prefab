@@ -29,7 +29,7 @@ Transform:
   m_GameObject: {fileID: 4355200390086549899}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.8, z: 35}
+  m_LocalPosition: {x: 0, y: 0, z: 35}
   m_LocalScale: {x: 2, y: 1.5, z: 1.5}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -69,7 +69,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 31321ba15b8f8eb4c954353edc038b1d, type: 2}
+  - {fileID: 2100000, guid: ebbd6be1973214d6497966d70c0156f0, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -112,8 +112,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.7377608, y: 1.5038648, z: 1.2118533}
-  m_Center: {x: -0.018225193, y: -0.5354828, z: 0.0023193758}
+  m_Size: {x: 0.76814663, y: 0.76881826, z: 1.281306}
+  m_Center: {x: -0.003032267, y: -0.13323292, z: 0.002319336}
 --- !u!114 &1195374077507650079
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -188,6 +188,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: -7511558181221131132, guid: bae015e7f8a90e24089bcf9c0c794331, type: 3}
+      propertyPath: 'm_Materials.Array.data[0]'
+      value: 
+      objectReference: {fileID: 2100000, guid: ebbd6be1973214d6497966d70c0156f0, type: 2}
     - target: {fileID: 919132149155446097, guid: bae015e7f8a90e24089bcf9c0c794331, type: 3}
       propertyPath: m_Name
       value: stone small gray blue 4

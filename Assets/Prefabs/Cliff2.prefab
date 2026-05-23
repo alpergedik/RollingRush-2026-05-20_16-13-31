@@ -62,9 +62,6 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 52bb919a0b4d444f79c21678c11b9e3f, type: 3}
       insertIndex: -1
-      addedObject: {fileID: -6615968532746752342}
-    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 52bb919a0b4d444f79c21678c11b9e3f, type: 3}
-      insertIndex: -1
       addedObject: {fileID: 2588186260954732530}
   m_SourcePrefab: {fileID: 100100000, guid: 52bb919a0b4d444f79c21678c11b9e3f, type: 3}
 --- !u!1 &6377293464039077456 stripped
@@ -72,20 +69,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 52bb919a0b4d444f79c21678c11b9e3f, type: 3}
   m_PrefabInstance: {fileID: 6071374908853914369}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &-6615968532746752342
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6377293464039077456}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5da92005f755e9d408650348e78825e1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ObstacleMover
-  moveSpeed: 8
-  disableZ: -20
 --- !u!65 &2588186260954732530
 BoxCollider:
   m_ObjectHideFlags: 0
