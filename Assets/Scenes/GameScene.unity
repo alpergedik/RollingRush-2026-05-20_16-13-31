@@ -5154,7 +5154,7 @@ Transform:
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
   m_LocalRotation: {x: 0.24226062, y: 0, z: 0, w: 0.9702112}
-  m_LocalPosition: {x: 0, y: 7.86, z: -16.96}
+  m_LocalPosition: {x: 1.5, y: 7.86, z: -16.96}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5578,13 +5578,12 @@ MonoBehaviour:
   - {fileID: 4355200390086549899, guid: 5ca2b756f53e92440a3890cdf641eca8, type: 3}
   - {fileID: 4355200390086549899, guid: 76918e637e34842429ab68701e553ae9, type: 3}
   poolSizePerPrefab: 9
-  spawnZ: 65
+  spawnZ: 180
   spawnY: 0.8
   minSpawnX: -4.2
   maxSpawnX: 4.2
   minSpawnInterval: 1
   maxSpawnInterval: 2
-  obstacleSpeed: 8
 --- !u!4 &689248698
 Transform:
   m_ObjectHideFlags: 0
@@ -5708,7 +5707,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CollectibleSpawner
   collectiblePrefab: {fileID: 5944067397942226093, guid: 814e2c9caf194354a901ba1783b46a7b, type: 3}
   poolSize: 20
-  spawnZ: 65
+  spawnZ: 180
   spawnY: 1
   minSpawnX: -4.2
   maxSpawnX: 4.2
@@ -6797,6 +6796,15 @@ MonoBehaviour:
   driftDustSideVelocity: 5
   driftDustUpVelocity: 2.5
   cameraTransform: {fileID: 330585546}
+  crashAnimationDuration: 1.15
+  crashKnockbackZ: 1.2
+  crashSideForce: 0.65
+  crashUpForce: 0.45
+  crashFallDownY: 0.55
+  crashSpinAngle: 520
+  crashLeanAngle: 85
+  crashImpactEase: 6
+  crashFallEase: 5
 --- !u!54 &1387905407
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -6833,7 +6841,7 @@ Transform:
   m_GameObject: {fileID: 1387905405}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 1, z: -10}
+  m_LocalPosition: {x: 1.53, y: 1, z: -10}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -6872,13 +6880,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CurvedWorldController
   curveOrigin: {fileID: 1387905408}
-  baseDownCurveStrength: 0.002
-  downCurveVariation: 0.003
-  downCurveNoiseSpeed: 0.45
-  maxSideCurveStrength: 0.002
-  sideCurveNoiseSpeed: 0.35
-  curveStartDistance: 0
-  curveSmoothSpeed: 5
+  baseDownCurveStrength: -0.00045
+  downCurveVariation: 0.00055
+  downCurveNoiseSpeed: 0.01
+  maxSideCurveStrength: 0.00045
+  sideCurveNoiseSpeed: 0.018
+  curveStartDistance: 10
+  curveSmoothSpeed: 0.8
+  referenceSpeed: 15
+  freezeWhenGameNotRunning: 1
 --- !u!4 &1534485640
 Transform:
   m_ObjectHideFlags: 0
@@ -7254,7 +7264,7 @@ MonoBehaviour:
   - {fileID: 247495438}
   segmentLength: 240.1
   playerZ: -10
-  safeBuffer: 5
+  safeBuffer: 25
   fallbackSpeed: 8
 --- !u!4 &1915521749
 Transform:

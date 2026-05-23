@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
+using System.Collections;
 
 public class GameManager : MonoBehaviour
 {
@@ -169,7 +170,7 @@ public class GameManager : MonoBehaviour
         UpdateScoreUI();
     }
 
-    public void GameOver()
+    public void GameOver(float delayBeforeFreeze = 0f)
     {
         if (isGameOver)
         {
@@ -179,25 +180,46 @@ public class GameManager : MonoBehaviour
         isGameOver = true;
         currentSpeed = 0f;
 
-        if (gameOverText != null)
+        if (delayBeforeFreeze > 0f)
         {
-            gameOverText.SetActive(true);
+            StartCoroutine(ShowGameOverAfterDelay(delayBeforeFreeze));
+        }
+        else
+        {
+            ShowGameOverUI();
+            Time.timeScale = 0f;
+        }
+    }
 
-            TMP_Text gameOverTMP = gameOverText.GetComponent<TMP_Text>();
+    private IEnumerator ShowGameOverAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
 
-            if (gameOverTMP != null)
-            {
-                gameOverTMP.text =
-                    "GAME OVER\n" +
-                    "Distance: " + Mathf.FloorToInt(distance) + " m\n" +
-                    "Parts: " + collectedParts + "\n" +
-                    "Score: " + score + "\n" +
-                    "Drift Score: " + driftScore + "\n" +
-                    "Press R to Restart";
-            }
+        ShowGameOverUI();
+        Time.timeScale = 0f;
+    }
+
+    private void ShowGameOverUI()
+    {
+        if (gameOverText == null)
+        {
+            return;
         }
 
-        Time.timeScale = 0f;
+        gameOverText.SetActive(true);
+
+        TMP_Text gameOverTMP = gameOverText.GetComponent<TMP_Text>();
+
+        if (gameOverTMP != null)
+        {
+            gameOverTMP.text =
+                "GAME OVER\n" +
+                "Distance: " + Mathf.FloorToInt(distance) + " m\n" +
+                "Parts: " + collectedParts + "\n" +
+                "Score: " + score + "\n" +
+                "Drift Score: " + driftScore + "\n" +
+                "Press R to Restart";
+        }
     }
 
     private void RestartGame()

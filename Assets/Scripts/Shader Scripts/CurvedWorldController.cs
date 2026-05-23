@@ -20,8 +20,14 @@ public class CurvedWorldController : MonoBehaviour
     [Header("Smoothing")]
     [SerializeField] private float curveSmoothSpeed = 2f;
 
+    [Header("Speed Sync")]
+    [SerializeField] private float referenceSpeed = 10f;
+    [SerializeField] private bool freezeWhenGameNotRunning = true;
+
     private float currentDownCurve;
     private float currentSideCurve;
+
+    private float curveTime;
 
     private static readonly int CurveOriginId = Shader.PropertyToID("_CurveOrigin");
     private static readonly int GlobalCurveStrengthId = Shader.PropertyToID("_GlobalCurveStrength");
@@ -32,6 +38,8 @@ public class CurvedWorldController : MonoBehaviour
     {
         currentDownCurve = baseDownCurveStrength;
         currentSideCurve = 0f;
+
+        ApplyShaderValues();
     }
 
     private void LateUpdate()
@@ -41,34 +49,76 @@ public class CurvedWorldController : MonoBehaviour
             return;
         }
 
-        UpdateDynamicCurveValues();
+        float speed = GetCurrentSpeed();
 
+        if (freezeWhenGameNotRunning && !IsGameRunning())
+        {
+            speed = 0f;
+        }
+
+        UpdateDynamicCurveValues(speed);
+        ApplyShaderValues();
+    }
+
+    private void UpdateDynamicCurveValues(float speed)
+    {
+        float speedRatio = 0f;
+
+        if (referenceSpeed > 0f)
+        {
+            speedRatio = speed / referenceSpeed;
+        }
+
+        speedRatio = Mathf.Max(0f, speedRatio);
+
+        curveTime += Time.deltaTime * speedRatio;
+
+        float downNoise = Mathf.PerlinNoise(curveTime * downCurveNoiseSpeed, 10.5f);
+        float sideNoise = Mathf.PerlinNoise(curveTime * sideCurveNoiseSpeed, 25.8f);
+
+        float targetDownCurve = baseDownCurveStrength + ((downNoise - 0.5f) * 2f * downCurveVariation);
+        float targetSideCurve = (sideNoise - 0.5f) * 2f * maxSideCurveStrength;
+
+        float smoothAmount = curveSmoothSpeed * Time.deltaTime;
+
+        currentDownCurve = Mathf.Lerp(
+            currentDownCurve,
+            targetDownCurve,
+            smoothAmount
+        );
+
+        currentSideCurve = Mathf.Lerp(
+            currentSideCurve,
+            targetSideCurve,
+            smoothAmount
+        );
+    }
+
+    private void ApplyShaderValues()
+    {
         Shader.SetGlobalVector(CurveOriginId, curveOrigin.position);
         Shader.SetGlobalFloat(GlobalCurveStrengthId, currentDownCurve);
         Shader.SetGlobalFloat(GlobalCurveSideStrengthId, currentSideCurve);
         Shader.SetGlobalFloat(GlobalCurveStartDistanceId, curveStartDistance);
     }
 
-    private void UpdateDynamicCurveValues()
+    private float GetCurrentSpeed()
     {
-        float time = Time.time;
+        if (GameManager.Instance == null)
+        {
+            return 0f;
+        }
 
-        float downNoise = Mathf.PerlinNoise(time * downCurveNoiseSpeed, 10.5f);
-        float sideNoise = Mathf.PerlinNoise(time * sideCurveNoiseSpeed, 25.8f);
+        return GameManager.Instance.currentSpeed;
+    }
 
-        float targetDownCurve = baseDownCurveStrength + ((downNoise - 0.5f) * 2f * downCurveVariation);
-        float targetSideCurve = (sideNoise - 0.5f) * 2f * maxSideCurveStrength;
+    private bool IsGameRunning()
+    {
+        if (GameManager.Instance == null)
+        {
+            return false;
+        }
 
-        currentDownCurve = Mathf.Lerp(
-            currentDownCurve,
-            targetDownCurve,
-            curveSmoothSpeed * Time.deltaTime
-        );
-
-        currentSideCurve = Mathf.Lerp(
-            currentSideCurve,
-            targetSideCurve,
-            curveSmoothSpeed * Time.deltaTime
-        );
+        return GameManager.Instance.isGameStarted && !GameManager.Instance.isGameOver;
     }
 }

@@ -19,9 +19,6 @@ public class ObstacleSpawner : MonoBehaviour
     public float minSpawnInterval = 1.0f;
     public float maxSpawnInterval = 2.0f;
 
-    [Header("Movement")]
-    public float obstacleSpeed = 8f;
-
     private readonly List<GameObject> obstaclePool = new List<GameObject>();
     private float spawnTimer;
     private float currentSpawnInterval;
@@ -84,14 +81,7 @@ public class ObstacleSpawner : MonoBehaviour
 
         obstacle.transform.position = new Vector3(xPosition, spawnY, spawnZ);
         obstacle.transform.rotation = Quaternion.identity;
-
-        ObstacleMover mover = obstacle.GetComponent<ObstacleMover>();
-
-        if (mover != null)
-        {
-            mover.moveSpeed = obstacleSpeed;
-        }
-
+        
         obstacle.SetActive(true);
     }
 

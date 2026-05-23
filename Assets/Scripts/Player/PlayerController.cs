@@ -1,4 +1,5 @@
 using UnityEngine;
+using DG.Tweening;
 
 public class PlayerController : MonoBehaviour
 {
@@ -73,6 +74,17 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float driftDustSideVelocity = 0.8f;
     [SerializeField] private float driftDustUpVelocity = 0.2f;
     [SerializeField] private Transform cameraTransform;
+    
+    [Header("Crash Animation")]
+    [SerializeField] private float crashAnimationDuration = 1.15f;
+    [SerializeField] private float crashKnockbackZ = 1.2f;
+    [SerializeField] private float crashSideForce = 0.65f;
+    [SerializeField] private float crashUpForce = 0.45f;
+    [SerializeField] private float crashFallDownY = 0.55f;
+    [SerializeField] private float crashSpinAngle = 520f;
+    [SerializeField] private float crashLeanAngle = 85f;
+    [SerializeField] private Ease crashImpactEase = Ease.OutQuad;
+    [SerializeField] private Ease crashFallEase = Ease.InQuad;
 
     private Rigidbody rb;
     private float startZ;
@@ -80,6 +92,7 @@ public class PlayerController : MonoBehaviour
     private float currentHorizontalVelocity;
     private float wobbleTimer;
     private bool isGrounded;
+    private bool isCrashing;
 
     private float driftIntensity;
     private float driftScoreTimer;
@@ -127,6 +140,11 @@ public class PlayerController : MonoBehaviour
 
     private bool CanUpdatePlayer()
     {
+        if (isCrashing)
+        {
+            return false;
+        }
+
         if (GameManager.Instance == null)
         {
             return true;
@@ -498,11 +516,135 @@ public class PlayerController : MonoBehaviour
     {
         if (collision.gameObject.CompareTag("Obstacle"))
         {
-            if (GameManager.Instance != null)
+            PlayCrashAnimation(collision);
+        }
+    }
+    private void PlayCrashAnimation(Collision collision)
+{
+    if (isCrashing)
+    {
+        return;
+    }
+
+    isCrashing = true;
+    currentHorizontalVelocity = 0f;
+    horizontalInput = 0f;
+    driftIntensity = 0f;
+    driftScoreTimer = 0f;
+
+    SetDriftDustEmission(0f);
+
+    if (driftDustParticle != null)
+    {
+        driftDustParticle.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+    }
+
+    Collider[] colliders = GetComponentsInChildren<Collider>();
+
+    for (int i = 0; i < colliders.Length; i++)
+    {
+        colliders[i].enabled = false;
+    }
+
+    if (rb != null)
+    {
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
+        rb.isKinematic = true;
+    }
+
+    transform.DOKill();
+
+    if (leanPivot != null)
+    {
+        leanPivot.DOKill();
+    }
+
+    if (rollPivot != null)
+    {
+        rollPivot.DOKill();
+    }
+
+    float hitDirection = GetCrashDirection(collision);
+
+    Vector3 startPosition = transform.position;
+
+    Vector3 impactPosition = startPosition + new Vector3(
+        hitDirection * crashSideForce,
+        crashUpForce,
+        -crashKnockbackZ
+    );
+
+    Vector3 fallPosition = new Vector3(
+        impactPosition.x,
+        Mathf.Max(0.15f, startPosition.y - crashFallDownY),
+        impactPosition.z
+    );
+
+    Sequence crashSequence = DOTween.Sequence();
+
+    crashSequence.Append(
+        transform.DOMove(impactPosition, crashAnimationDuration * 0.35f)
+            .SetEase(crashImpactEase)
+    );
+
+    crashSequence.Append(
+        transform.DOMove(fallPosition, crashAnimationDuration * 0.65f)
+            .SetEase(crashFallEase)
+    );
+
+    if (leanPivot != null)
+    {
+        Vector3 targetLeanRotation = new Vector3(
+            65f,
+            hitDirection * 25f,
+            -hitDirection * crashLeanAngle
+        );
+
+        crashSequence.Join(
+            leanPivot.DOLocalRotate(
+                targetLeanRotation,
+                crashAnimationDuration,
+                RotateMode.FastBeyond360
+            ).SetEase(Ease.OutCubic)
+        );
+    }
+
+    if (rollPivot != null)
+    {
+        crashSequence.Join(
+            rollPivot.DOLocalRotate(
+                new Vector3(0f, 0f, crashSpinAngle * hitDirection),
+                crashAnimationDuration,
+                RotateMode.LocalAxisAdd
+            ).SetEase(Ease.OutQuart)
+        );
+    }
+
+    if (GameManager.Instance != null)
+    {
+        GameManager.Instance.GameOver(crashAnimationDuration + 0.05f);
+    }
+}
+    private float GetCrashDirection(Collision collision)
+    {
+        if (collision.contactCount > 0)
+        {
+            Vector3 contactPoint = collision.GetContact(0).point;
+            float direction = Mathf.Sign(transform.position.x - contactPoint.x);
+
+            if (Mathf.Abs(direction) > 0.01f)
             {
-                GameManager.Instance.GameOver();
+                return direction;
             }
         }
+
+        if (Mathf.Abs(currentHorizontalVelocity) > 0.05f)
+        {
+            return -Mathf.Sign(currentHorizontalVelocity);
+        }
+
+        return Random.value < 0.5f ? -1f : 1f;
     }
 
     private void OnTriggerEnter(Collider other)
