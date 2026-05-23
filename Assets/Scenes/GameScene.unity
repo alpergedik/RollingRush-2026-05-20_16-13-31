@@ -5218,8 +5218,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraFollow
   target: {fileID: 1387905408}
-  springStrength: 80
-  damping: 8
+  followSpeed: 5
 --- !u!1001 &374220422
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5608,7 +5607,7 @@ MonoBehaviour:
   scoreMultiplier: 10
   collectedParts: 0
   partScoreValue: 100
-  scoreText: {fileID: 1033043678}
+  scoreText: {fileID: 1033043676}
   driftScore: 0
   startTitleText: {fileID: 1397353794}
   startDescriptionText: {fileID: 2010696301}
@@ -11010,7 +11009,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1033043677
 RectTransform:
   m_ObjectHideFlags: 0

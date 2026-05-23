@@ -2,36 +2,44 @@ using UnityEngine;
 
 public class CameraFollow : MonoBehaviour
 {
+    [Header("Target")]
     public Transform target;
 
-    [Header("Spring Settings")]
-    public float springStrength = 90f;
-    public float damping = 6f;
+    [Header("Follow Settings")]
+    public float followSpeed = 5f;
 
     private Vector3 offset;
-    private Vector3 velocity;
+    private float fixedYPosition;
 
-    void Start()
+    private void Start()
     {
-        if (target == null) return;
+        if (target == null)
+        {
+            return;
+        }
 
         offset = transform.position - target.position;
+
+        fixedYPosition = transform.position.y;
     }
 
-    void LateUpdate()
+    private void LateUpdate()
     {
-        if (target == null) return;
+        if (target == null)
+        {
+            return;
+        }
 
-        Vector3 targetPosition = target.position + offset;
+        Vector3 targetPosition = new Vector3(
+            target.position.x + offset.x,
+            fixedYPosition,
+            target.position.z + offset.z
+        );
 
-        Vector3 displacement = targetPosition - transform.position;
-
-        Vector3 springForce = displacement * springStrength;
-        Vector3 dampingForce = -velocity * damping;
-
-        Vector3 acceleration = springForce + dampingForce;
-
-        velocity += acceleration * Time.deltaTime;
-        transform.position += velocity * Time.deltaTime;
+        transform.position = Vector3.Lerp(
+            transform.position,
+            targetPosition,
+            followSpeed * Time.deltaTime
+        );
     }
 }

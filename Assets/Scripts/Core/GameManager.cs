@@ -27,7 +27,7 @@ public class GameManager : MonoBehaviour
     public int partScoreValue = 100;
 
     [Header("UI")]
-    public TMP_Text scoreText;
+    public GameObject scoreText;
     public int driftScore = 0;
     public GameObject startTitleText;
     public GameObject startDescriptionText;
@@ -55,6 +55,16 @@ public class GameManager : MonoBehaviour
         if (startTitleText != null)
         {
             startTitleText.SetActive(true);
+        }
+        
+        if (startDescriptionText != null)
+        {
+            startDescriptionText.SetActive(true);
+        }
+        
+        if (scoreText != null)
+        {
+            scoreText.SetActive(false);
         }
 
         if (gameOverTitleText != null)
@@ -111,6 +121,10 @@ public class GameManager : MonoBehaviour
             startDescriptionText.SetActive(false);
         }
 
+        if (scoreText != null)
+        {
+            scoreText.SetActive(true);
+        }
         
     }
 
@@ -160,8 +174,9 @@ public class GameManager : MonoBehaviour
         {
             return;
         }
-
-        scoreText.text =
+        
+        TMP_Text scoreTextTMP = scoreText.GetComponent<TMP_Text>();
+        scoreTextTMP.text =
             "Distance: " + Mathf.FloorToInt(distance) + " m\n" +
             "Parts: " + collectedParts + "\n" +
             "Score: " + score + "\n" +
@@ -215,9 +230,14 @@ public class GameManager : MonoBehaviour
 
     private void ShowGameOverUI()
     {
-        if (gameOverTitleText == null)
+        if (gameOverTitleText == null || gameOverDescriptionText == null)
         {
             return;
+        }
+        
+        if (scoreText != null)
+        {
+            scoreText.SetActive(false);
         }
 
         gameOverTitleText.SetActive(true);
