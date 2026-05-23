@@ -5079,6 +5079,7 @@ GameObject:
   - component: {fileID: 330585545}
   - component: {fileID: 330585544}
   - component: {fileID: 330585547}
+  - component: {fileID: 330585548}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -5204,6 +5205,21 @@ MonoBehaviour:
     m_VarianceClampScale: 0.9
     m_ContrastAdaptiveSharpening: 0
   m_Version: 2
+--- !u!114 &330585548
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 330585543}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d75cc28427e4e4d9db244a5e4bae79e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CameraFollow
+  target: {fileID: 1387905408}
+  springStrength: 80
+  damping: 8
 --- !u!1001 &374220422
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -5536,6 +5552,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1022235487}
   - {fileID: 1884115838}
   m_Father: {fileID: 1387905408}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -6027,12 +6044,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1022235486}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0.92387956, z: 0.38268343, w: 0}
-  m_LocalPosition: {x: 0, y: -0.39999998, z: -0.6999998}
+  m_LocalRotation: {x: -0, y: 0.9238796, z: 0.38268343, w: 0}
+  m_LocalPosition: {x: 0, y: -0.59999996, z: -0.6999998}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 1387905408}
+  m_Father: {fileID: 544584846}
   m_LocalEulerAnglesHint: {x: -45, y: 180, z: 0}
 --- !u!199 &1022235488
 ParticleSystemRenderer:
@@ -11684,7 +11701,6 @@ Transform:
   - {fileID: 1248064596}
   - {fileID: 544584846}
   - {fileID: 92305082}
-  - {fileID: 1022235487}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1534485638
