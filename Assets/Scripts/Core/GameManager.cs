@@ -29,8 +29,10 @@ public class GameManager : MonoBehaviour
     [Header("UI")]
     public TMP_Text scoreText;
     public int driftScore = 0;
-    public GameObject startText;
-    public GameObject gameOverText;
+    public GameObject startTitleText;
+    public GameObject startDescriptionText;
+    public GameObject gameOverTitleText;
+    public GameObject gameOverDescriptionText;
 
     private int bonusScore = 0;
 
@@ -50,14 +52,19 @@ public class GameManager : MonoBehaviour
         collectedParts = 0;
         bonusScore = 0;
 
-        if (startText != null)
+        if (startTitleText != null)
         {
-            startText.SetActive(true);
+            startTitleText.SetActive(true);
         }
 
-        if (gameOverText != null)
+        if (gameOverTitleText != null)
         {
-            gameOverText.SetActive(false);
+            gameOverTitleText.SetActive(false);
+        }
+        
+        if (gameOverTitleText != null)
+        {
+            gameOverTitleText.SetActive(false);
         }
 
         UpdateScoreUI();
@@ -94,10 +101,17 @@ public class GameManager : MonoBehaviour
         isGameStarted = true;
         currentSpeed = defaultSpeed;
 
-        if (startText != null)
+        if (startTitleText != null)
         {
-            startText.SetActive(false);
+            startTitleText.SetActive(false);
         }
+        
+        if (startDescriptionText != null)
+        {
+            startDescriptionText.SetActive(false);
+        }
+
+        
     }
 
     private void UpdateSpeed()
@@ -201,24 +215,24 @@ public class GameManager : MonoBehaviour
 
     private void ShowGameOverUI()
     {
-        if (gameOverText == null)
+        if (gameOverTitleText == null)
         {
             return;
         }
 
-        gameOverText.SetActive(true);
+        gameOverTitleText.SetActive(true);
+        gameOverDescriptionText.SetActive(true);
 
-        TMP_Text gameOverTMP = gameOverText.GetComponent<TMP_Text>();
+        TMP_Text gameOverTMP = gameOverDescriptionText.GetComponent<TMP_Text>();
 
-        if (gameOverTMP != null)
-        {
+        
+        if (gameOverTMP != null) {
             gameOverTMP.text =
-                "GAME OVER\n" +
+                "Press R to Restart\n\n" +
                 "Distance: " + Mathf.FloorToInt(distance) + " m\n" +
                 "Parts: " + collectedParts + "\n" +
                 "Score: " + score + "\n" +
-                "Drift Score: " + driftScore + "\n" +
-                "Press R to Restart";
+                "Drift Score: " + driftScore;
         }
     }
 
