@@ -11973,8 +11973,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 06bf5dcf38fe04146a94f98e9c1c2873, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerController
-  minX: -2.5
-  maxX: 2.5
+  minX: -2.1
+  maxX: 2
   maxHorizontalSpeed: 7
   horizontalAcceleration: 20
   horizontalDeceleration: 14
