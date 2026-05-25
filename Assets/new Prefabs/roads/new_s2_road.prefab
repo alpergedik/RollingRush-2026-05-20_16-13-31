@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 7974112534687302420}
   - component: {fileID: 6414927484726922417}
   - component: {fileID: 9143030475942082683}
-  - component: {fileID: 2237270845343705078}
+  - component: {fileID: 8374872803837062973}
   m_Layer: 3
   m_Name: new_s2_road
   m_TagString: Untagged
@@ -91,8 +91,8 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &2237270845343705078
-MeshCollider:
+--- !u!65 &8374872803837062973
+BoxCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
@@ -109,7 +109,6 @@ MeshCollider:
   m_IsTrigger: 0
   m_ProvidesContacts: 0
   m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 4579454407841743219, guid: 6daa80994e4834d4a9ca5ec932b00ce9, type: 3}
+  serializedVersion: 3
+  m_Size: {x: 0.09999999, y: 0.4263507, z: 0.000888821}
+  m_Center: {x: 0, y: 0.08609428, z: 0.00044441049}

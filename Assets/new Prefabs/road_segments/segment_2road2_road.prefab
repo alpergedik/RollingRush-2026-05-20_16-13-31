@@ -636,8 +636,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3.4606853, y: 3.2043703, z: 3.462264}
-  m_Center: {x: -1.718809, y: 1.1021851, z: 1.5775887}
+  m_Size: {x: 2.9552712, y: 3.2043703, z: 2.8503544}
+  m_Center: {x: -1.9058615, y: 1.1021851, z: 1.6865908}
 --- !u!1 &5081381196610924592
 GameObject:
   m_ObjectHideFlags: 0
@@ -689,8 +689,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 3.5130982, y: 3.2043703, z: 3.640707}
-  m_Center: {x: -1.6926018, y: 1.1021851, z: 1.4883628}
+  m_Size: {x: 3.5130982, y: 3.2043703, z: 3.520587}
+  m_Center: {x: -1.6926013, y: 1.1021851, z: 1.4282943}
 --- !u!1 &5597206544244392511
 GameObject:
   m_ObjectHideFlags: 0
@@ -776,8 +776,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 5.0793514, y: 3.2043703, z: 5.2820473}
-  m_Center: {x: -0.26604462, y: 1.1021851, z: 4.573436}
+  m_Size: {x: 4.508505, y: 3.2043703, z: 5.2820473}
+  m_Center: {x: -0.3673241, y: 1.1021851, z: 4.573436}
 --- !u!1 &6776667223719109998
 GameObject:
   m_ObjectHideFlags: 0
@@ -1114,7 +1114,6 @@ GameObject:
   - component: {fileID: 3116238511420630144}
   - component: {fileID: 6372884104542582807}
   - component: {fileID: 3369186789228812980}
-  - component: {fileID: 7606489932390944172}
   m_Layer: 0
   m_Name: segment_2road2_road
   m_TagString: Untagged
@@ -1198,28 +1197,6 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!64 &7606489932390944172
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8721409189104490891}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 5
-  m_Convex: 0
-  m_CookingOptions: 30
-  m_Mesh: {fileID: 10209, guid: 0000000000000000e000000000000000, type: 0}
 --- !u!1001 &35998555482992303
 PrefabInstance:
   m_ObjectHideFlags: 0

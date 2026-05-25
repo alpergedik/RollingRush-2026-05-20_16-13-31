@@ -3,110 +3,136 @@ using DG.Tweening;
 
 public class PlayerController : MonoBehaviour
 {
-    [Header("Horizontal Movement")]
-    [SerializeField] private float minX = -4.5f;
-    [SerializeField] private float maxX = 4.5f;
+    [Header("Movement")]
+    [Tooltip("Player'ın sağ-sol maksimum hareket hızı.")]
     [SerializeField] private float maxHorizontalSpeed = 7f;
     [SerializeField] private float horizontalAcceleration = 20f;
     [SerializeField] private float horizontalDeceleration = 14f;
-
-    [Header("Jump")]
     [SerializeField] private float jumpForce = 7f;
-    [SerializeField] private float groundCheckDistance = 1.2f;
+
+    [Header("Ground Check")]
+    [SerializeField] private Transform groundCheckPoint;
     [SerializeField] private LayerMask groundLayer;
+    [SerializeField] private float groundCheckDistance = 1.5f;
+    [Tooltip("SphereCast genişliği. Zemin algısı kopuyorsa artırılabilir.")]
+    [SerializeField] private float groundCheckRadius = 0.35f;
+    [SerializeField] private bool debugGroundCheck = false;
 
-    [Header("Visual Roll")]
+    [Header("Wheel Visuals")]
     [SerializeField] private Transform rollPivot;
-    [SerializeField] private float visualRollSpeed = 8f;
-    [SerializeField] private float wheelRadius = 1f;
-
-    [Header("Visual Lean (Yalpalama)")]
     [SerializeField] private Transform leanPivot;
+    [Tooltip("Tekerin sağ-sol yatma açısı.")]
     [SerializeField] private float maxLeanAngle = 12f;
+    [Tooltip("Tekerin sağ-sol yönelme açısı.")]
     [SerializeField] private float maxSteerAngle = 10f;
-    [SerializeField] private float leanSmooth = 8f;
 
-    [Header("Natural Wobble (Sallanma)")]
-    [SerializeField] private float idleWobbleLeanAmount = 3f;
-    [SerializeField] private float idleWobbleSteerAmount = 1.5f;
-    [SerializeField] private float idleWobbleSpeed = 2.1f;
-    [SerializeField] private float wobbleInputFade = 0.25f;
-
-    [SerializeField] private float referenceSpeed = 10f;
-    [SerializeField] private float minWobbleSpeedMultiplier = 0.45f;
-    [SerializeField] private float maxWobbleSpeedMultiplier = 1.8f;
-    [SerializeField] private float highSpeedWobbleAmountMultiplier = 1.25f;
-    [SerializeField] private float lowSpeedWobbleAmountMultiplier = 0.55f;
+    [Header("Road Feel")]
+    [Tooltip("Input yokken bozuk yolun tekeri sağa/sola çekme gücü.")]
+    [SerializeField] private float roadDriftStrength = 0.8f;
+    [Tooltip("Bozuk yol yön değişiminin ne kadar hızlı değişeceği.")]
+    [SerializeField] private float roadDriftChangeSpeed = 0.35f;
 
     [Header("Drift")]
     [SerializeField] private bool enableDrift = true;
-
     [Tooltip("Bu hızın altında drift başlamaz.")]
     [SerializeField] private float minDriftForwardSpeed = 11f;
-
     [Tooltip("Bu hızda drift intensity maksimuma yaklaşır.")]
     [SerializeField] private float fullDriftForwardSpeed = 16f;
-
     [Tooltip("Yatay hız bu değerin altındaysa drift başlamaz.")]
     [SerializeField] private float minDriftHorizontalSpeed = 2.5f;
-
-    [Tooltip("Yatay hız bu değere yaklaşınca drift intensity güçlenir.")]
-    [SerializeField] private float fullDriftHorizontalSpeed = 7f;
-
-    [SerializeField] private float driftBuildSpeed = 5f;
-    [SerializeField] private float driftFadeSpeed = 4f;
-
     [Tooltip("Drift sırasında tekerin yan yüzeyini göstermek için Y eksenindeki ekstra dönüş.")]
     [SerializeField] private float driftSideViewAngle = 28f;
-
-    [Tooltip("Drift sırasında ekstra yana yatma.")]
-    [SerializeField] private float driftExtraLeanAngle = 8f;
-
-    [Header("Drift Score")]
-    [SerializeField] private float driftScorePerSecond = 25f;
-    [SerializeField] private float driftScoreTickInterval = 0.1f;
 
     [Header("Drift FX")]
     [SerializeField] private ParticleSystem driftDustParticle;
     [SerializeField] private float maxDriftDustEmission = 45f;
-
-    [SerializeField] private float driftDustBackwardVelocity = 3.5f;
-    [SerializeField] private float driftDustSideVelocity = 0.8f;
-    [SerializeField] private float driftDustUpVelocity = 0.2f;
     [SerializeField] private Transform cameraTransform;
-    
+
+    [Header("Stone FX")]
+    [SerializeField] private ParticleSystem stoneParticle;
+
     [Header("Crash Animation")]
     [SerializeField] private float crashAnimationDuration = 1.15f;
     [SerializeField] private float crashKnockbackZ = 1.2f;
-    [SerializeField] private float crashSideForce = 0.65f;
-    [SerializeField] private float crashUpForce = 0.45f;
-    [SerializeField] private float crashFallDownY = 0.55f;
     [SerializeField] private float crashSpinAngle = 520f;
     [SerializeField] private float crashLeanAngle = 85f;
-    [SerializeField] private Ease crashImpactEase = Ease.OutQuad;
-    [SerializeField] private Ease crashFallEase = Ease.InQuad;
+
+    // --- Hidden Settings (Still active in code) ---
+    private float visualRollSpeed = 8f;
+    private float wheelRadius = 1f;
+    private float leanSmooth = 10f;
+    
+    private float idleWobbleLeanAmount = 3f;
+    private float idleWobbleSteerAmount = 1.5f;
+    private float idleWobbleSpeed = 2.4f;
+    private float wobbleInputFade = 0.35f;
+    private float referenceSpeed = 10f;
+    private float minWobbleSpeedMultiplier = 0.45f;
+    private float maxWobbleSpeedMultiplier = 1.8f;
+    private float highSpeedWobbleAmountMultiplier = 1.25f;
+    private float lowSpeedWobbleAmountMultiplier = 0.55f;
+
+    private float fullDriftHorizontalSpeed = 7f;
+    private float driftBuildSpeed = 5f;
+    private float driftFadeSpeed = 4f;
+    private float driftExtraLeanAngle = 8f;
+
+    private float driftScorePerSecond = 25f;
+    private float driftScoreTickInterval = 0.1f;
+
+    private float driftDustBackwardVelocity = 15f;
+    private float driftDustSideVelocity = 5f;
+    private float driftDustUpVelocity = 2.5f;
+
+    private float stoneMinSpeed = 2f;
+    private float stoneFullSpeed = 10f;
+    private float stoneMaxEmission = 30f;
+    private float stoneDriftSuppressThreshold = 0.25f;
+
+    private float crashSideForce = 0.65f;
+    private float crashUpForce = 0.45f;
+    private float crashFallDownY = 0.55f;
+    private Ease crashImpactEase = Ease.OutQuad;
+    private Ease crashFallEase = Ease.InQuad;
+
+    private float jumpGroundLockTime = 0.2f;
+    private bool hasJumped;
+    private float jumpLockTimer;
 
     private Rigidbody rb;
     private float startZ;
     private float horizontalInput;
     private float currentHorizontalVelocity;
+    private float roadDriftSeed;
+    private float currentRoadDrift;
     private float wobbleTimer;
     private bool isGrounded;
     private bool isCrashing;
+    
 
     private float driftIntensity;
     private float driftScoreTimer;
+    
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
         startZ = transform.position.z;
+        
+        roadDriftSeed = Random.Range(0f, 1000f);
 
         SetDriftDustEmission(0f);
 
         if (driftDustParticle != null)
         {
             driftDustParticle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
+
+        SetStoneEmission(0f);
+
+        if (stoneParticle != null)
+        {
+            stoneParticle.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
         }
     }
 
@@ -117,6 +143,16 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
+        if (jumpLockTimer > 0f)
+        {
+            jumpLockTimer -= Time.deltaTime;
+        }
+
+        if (isGrounded && jumpLockTimer <= 0f && rb.linearVelocity.y <= 0.1f)
+        {
+            hasJumped = false;
+        }
+
         ReadHorizontalInput();
         UpdateGroundedState();
         HandleJumpInput();
@@ -125,6 +161,7 @@ public class PlayerController : MonoBehaviour
         UpdateLeanVisual();
         UpdateDriftScore();
         UpdateDriftFX();
+        UpdateStoneFX();
     }
 
 
@@ -174,6 +211,23 @@ public class PlayerController : MonoBehaviour
     {
         float targetVelocity = horizontalInput * maxHorizontalSpeed;
 
+        float roadDrift = 0f;
+
+        if (isGrounded && Mathf.Abs(horizontalInput) < 0.01f)
+        {
+            float noise = Mathf.PerlinNoise(
+                Time.time * roadDriftChangeSpeed,
+                roadDriftSeed
+            );
+
+            roadDrift = (noise - 0.5f) * 2f * roadDriftStrength;
+
+            targetVelocity += roadDrift;
+            targetVelocity = Mathf.Clamp(targetVelocity, -maxHorizontalSpeed, maxHorizontalSpeed);
+        }
+
+        currentRoadDrift = roadDrift;
+
         float speedChangeRate = Mathf.Abs(horizontalInput) > 0.01f
             ? horizontalAcceleration
             : horizontalDeceleration;
@@ -187,13 +241,6 @@ public class PlayerController : MonoBehaviour
         Vector3 currentPosition = rb.position;
 
         float newX = currentPosition.x + currentHorizontalVelocity * Time.fixedDeltaTime;
-        newX = Mathf.Clamp(newX, minX, maxX);
-
-        if ((newX <= minX && currentHorizontalVelocity < 0f) ||
-            (newX >= maxX && currentHorizontalVelocity > 0f))
-        {
-            currentHorizontalVelocity = 0f;
-        }
 
         Vector3 targetPosition = new Vector3(
             newX,
@@ -206,8 +253,10 @@ public class PlayerController : MonoBehaviour
 
     private void HandleJumpInput()
     {
-        if (Input.GetKeyDown(KeyCode.Space) && isGrounded)
+        if (Input.GetKeyDown(KeyCode.Space) && isGrounded && !hasJumped && jumpLockTimer <= 0f)
         {
+            hasJumped = true;
+            jumpLockTimer = jumpGroundLockTime;
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
         }
     }
@@ -219,12 +268,25 @@ public class PlayerController : MonoBehaviour
 
     private bool IsGrounded()
     {
-        return Physics.Raycast(
-            transform.position,
+        Vector3 origin = groundCheckPoint != null ? groundCheckPoint.position : transform.position + Vector3.up * 0.4f;
+
+        bool hit = Physics.SphereCast(
+            origin,
+            groundCheckRadius,
             Vector3.down,
+            out RaycastHit hitInfo,
             groundCheckDistance,
-            groundLayer
+            groundLayer,
+            QueryTriggerInteraction.Ignore
         );
+
+        if (debugGroundCheck)
+        {
+            Color debugColor = hit ? Color.green : Color.red;
+            Debug.DrawRay(origin, Vector3.down * groundCheckDistance, debugColor);
+        }
+
+        return hit;
     }
 
     private void RotateWheelVisual()
@@ -335,8 +397,21 @@ public class PlayerController : MonoBehaviour
 
         wobbleTimer += Time.deltaTime * idleWobbleSpeed * wobbleSpeedMultiplier;
 
-        float targetLeanZ = -velocityPercent * maxLeanAngle;
-        float targetSteerY = velocityPercent * maxSteerAngle;
+        float roadDriftPercent = 0f;
+
+        if (isGrounded && Mathf.Abs(horizontalInput) < 0.01f && maxHorizontalSpeed > 0f)
+        {
+            roadDriftPercent = currentRoadDrift / maxHorizontalSpeed;
+        }
+
+        float visualDirectionPercent = Mathf.Abs(horizontalInput) > 0.01f
+            ? velocityPercent
+            : roadDriftPercent;
+
+        visualDirectionPercent = Mathf.Clamp(visualDirectionPercent, -1f, 1f);
+
+        float targetLeanZ = -visualDirectionPercent * maxLeanAngle;
+        float targetSteerY = visualDirectionPercent * maxSteerAngle;
 
         float driftDirection = GetDriftDirection();
 
@@ -487,6 +562,82 @@ public class PlayerController : MonoBehaviour
         emission.rateOverTime = new ParticleSystem.MinMaxCurve(rate);
     }
 
+    private void UpdateStoneFX()
+    {
+        if (stoneParticle == null)
+        {
+            return;
+        }
+
+        float currentSpeed = GetCurrentForwardSpeed();
+
+        bool shouldEmit =
+            isGrounded &&
+            !isCrashing &&
+            currentSpeed > stoneMinSpeed;
+
+        if (!shouldEmit)
+        {
+            SetStoneEmission(0f);
+
+            if (stoneParticle.isPlaying)
+            {
+                stoneParticle.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+            }
+
+            return;
+        }
+
+        float speedFactor = Mathf.InverseLerp(
+            stoneMinSpeed,
+            stoneFullSpeed,
+            currentSpeed
+        );
+
+        float driftSuppression = Mathf.InverseLerp(
+            stoneDriftSuppressThreshold,
+            1f,
+            driftIntensity
+        );
+
+        float emissionRate =
+            stoneMaxEmission *
+            speedFactor *
+            (1f - driftSuppression);
+
+        emissionRate = Mathf.Max(0f, emissionRate);
+
+        if (emissionRate > 0.1f)
+        {
+            if (!stoneParticle.isPlaying)
+            {
+                stoneParticle.Play();
+            }
+
+            SetStoneEmission(emissionRate);
+        }
+        else
+        {
+            SetStoneEmission(0f);
+
+            if (stoneParticle.isPlaying)
+            {
+                stoneParticle.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+            }
+        }
+    }
+
+    private void SetStoneEmission(float rate)
+    {
+        if (stoneParticle == null)
+        {
+            return;
+        }
+
+        ParticleSystem.EmissionModule emission = stoneParticle.emission;
+        emission.rateOverTime = new ParticleSystem.MinMaxCurve(rate);
+    }
+
     private float GetCurrentForwardSpeed()
     {
         if (GameManager.Instance != null)
@@ -517,8 +668,51 @@ public class PlayerController : MonoBehaviour
         if (collision.gameObject.CompareTag("Obstacle"))
         {
             PlayCrashAnimation(collision);
+            return;
+        }
+
+        if (collision.gameObject.layer == LayerMask.NameToLayer("RoadBoundary"))
+        {
+            currentHorizontalVelocity = 0f;
         }
     }
+    
+    private void OnCollisionStay(Collision collision)
+    {
+        if (collision.gameObject.layer != LayerMask.NameToLayer("RoadBoundary"))
+        {
+            return;
+        }
+
+        if (collision.contactCount <= 0)
+        {
+            return;
+        }
+
+        Vector3 averageNormal = Vector3.zero;
+
+        for (int i = 0; i < collision.contactCount; i++)
+        {
+            averageNormal += collision.GetContact(i).normal;
+        }
+
+        averageNormal.Normalize();
+
+        Vector3 horizontalVelocityDirection = new Vector3(currentHorizontalVelocity, 0f, 0f).normalized;
+
+        if (horizontalVelocityDirection == Vector3.zero)
+        {
+            return;
+        }
+
+        float pushingIntoWall = Vector3.Dot(horizontalVelocityDirection, -averageNormal);
+
+        if (pushingIntoWall > 0.2f)
+        {
+            currentHorizontalVelocity = 0f;
+        }
+    }
+    
     private void PlayCrashAnimation(Collision collision)
 {
     if (isCrashing)
@@ -537,6 +731,13 @@ public class PlayerController : MonoBehaviour
     if (driftDustParticle != null)
     {
         driftDustParticle.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+    }
+
+    SetStoneEmission(0f);
+
+    if (stoneParticle != null)
+    {
+        stoneParticle.Stop(true, ParticleSystemStopBehavior.StopEmitting);
     }
 
     Collider[] colliders = GetComponentsInChildren<Collider>();
