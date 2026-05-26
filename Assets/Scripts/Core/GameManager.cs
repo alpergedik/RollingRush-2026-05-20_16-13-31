@@ -2,6 +2,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using TMPro;
 using System.Collections;
+using UnityEngine.UI;
+using DG.Tweening;
 
 public class GameManager : MonoBehaviour
 {
@@ -25,14 +27,27 @@ public class GameManager : MonoBehaviour
     public int scoreMultiplier = 10;
     public int collectedParts = 0;
     public int partScoreValue = 100;
-
-    [Header("UI")]
-    public GameObject scoreText;
     public int driftScore = 0;
-    public GameObject startTitleText;
-    public GameObject startDescriptionText;
-    public GameObject gameOverTitleText;
-    public GameObject gameOverDescriptionText;
+
+    [Header("Gameplay UI")]
+    public GameObject scoreText;
+
+    [Header("Game Over UI")]
+    [SerializeField] private GameObject gameOverPanel;
+    [SerializeField] private Image gameOverDarkOverlay;
+    [SerializeField] private TMP_Text gameOverStatsText;
+    [SerializeField] private Button gameOverHomeButton;
+    [SerializeField] private Button gameOverRetryButton;
+
+    [Header("Scene Names")]
+    [SerializeField] private string mainMenuSceneName = "MainMenuScene";
+
+    [Header("Game Over Tween Settings")]
+    [SerializeField] private float gameOverPanelOpenDuration = 0.28f;
+    [SerializeField] private float gameOverOverlayFadeDuration = 0.2f;
+    [SerializeField] private float gameOverOverlayMaxAlpha = 0.55f;
+    [SerializeField] private float buttonPressScale = 0.9f;
+    [SerializeField] private float buttonPressDuration = 0.08f;
 
     private int bonusScore = 0;
 
@@ -52,32 +67,37 @@ public class GameManager : MonoBehaviour
         collectedParts = 0;
         bonusScore = 0;
 
-        if (startTitleText != null)
-        {
-            startTitleText.SetActive(true);
-        }
-        
-        if (startDescriptionText != null)
-        {
-            startDescriptionText.SetActive(true);
-        }
-        
         if (scoreText != null)
         {
             scoreText.SetActive(false);
         }
 
-        if (gameOverTitleText != null)
+        if (gameOverPanel != null)
         {
-            gameOverTitleText.SetActive(false);
+            gameOverPanel.SetActive(false);
+            gameOverPanel.transform.localScale = Vector3.zero;
         }
-        
-        if (gameOverTitleText != null)
+
+        if (gameOverDarkOverlay != null)
         {
-            gameOverTitleText.SetActive(false);
+            gameOverDarkOverlay.gameObject.SetActive(false);
+            SetGameOverOverlayAlpha(0f);
         }
 
         UpdateScoreUI();
+    }
+
+    private void Start()
+    {
+        if (gameOverHomeButton != null)
+        {
+            gameOverHomeButton.onClick.AddListener(GameOverHomeButtonPressed);
+        }
+
+        if (gameOverRetryButton != null)
+        {
+            gameOverRetryButton.onClick.AddListener(GameOverRetryButtonPressed);
+        }
     }
 
     private void Update()
@@ -111,21 +131,12 @@ public class GameManager : MonoBehaviour
         isGameStarted = true;
         currentSpeed = defaultSpeed;
 
-        if (startTitleText != null)
-        {
-            startTitleText.SetActive(false);
-        }
-        
-        if (startDescriptionText != null)
-        {
-            startDescriptionText.SetActive(false);
-        }
-
         if (scoreText != null)
         {
             scoreText.SetActive(true);
         }
-        
+
+        UpdateScoreUI();
     }
 
     private void UpdateSpeed()
@@ -165,24 +176,10 @@ public class GameManager : MonoBehaviour
 
         collectedParts++;
         bonusScore += partScoreValue;
+
         UpdateScoreUI();
     }
 
-    private void UpdateScoreUI()
-    {
-        if (scoreText == null)
-        {
-            return;
-        }
-        
-        TMP_Text scoreTextTMP = scoreText.GetComponent<TMP_Text>();
-        scoreTextTMP.text =
-            "Distance: " + Mathf.FloorToInt(distance) + " m\n" +
-            "Parts: " + collectedParts + "\n" +
-            "Score: " + score + "\n" +
-            "Drift Score: " + driftScore + "\n";
-    }
-    
     public void AddDriftScore(int amount)
     {
         if (!isGameStarted || isGameOver)
@@ -196,7 +193,29 @@ public class GameManager : MonoBehaviour
         }
 
         driftScore += amount;
+
         UpdateScoreUI();
+    }
+
+    private void UpdateScoreUI()
+    {
+        if (scoreText == null)
+        {
+            return;
+        }
+
+        TMP_Text scoreTextTMP = scoreText.GetComponent<TMP_Text>();
+
+        if (scoreTextTMP == null)
+        {
+            return;
+        }
+
+        scoreTextTMP.text =
+            "Distance: " + Mathf.FloorToInt(distance) + " m\n" +
+            "Parts: " + collectedParts + "\n" +
+            "Score: " + score + "\n" +
+            "Drift Score: " + driftScore + "\n";
     }
 
     public void GameOver(float delayBeforeFreeze = 0f)
@@ -230,35 +249,116 @@ public class GameManager : MonoBehaviour
 
     private void ShowGameOverUI()
     {
-        if (gameOverTitleText == null || gameOverDescriptionText == null)
-        {
-            return;
-        }
-        
         if (scoreText != null)
         {
             scoreText.SetActive(false);
         }
 
-        gameOverTitleText.SetActive(true);
-        gameOverDescriptionText.SetActive(true);
-
-        TMP_Text gameOverTMP = gameOverDescriptionText.GetComponent<TMP_Text>();
-
-        
-        if (gameOverTMP != null) {
-            gameOverTMP.text =
-                "Press R to Restart\n\n" +
-                "Distance: " + Mathf.FloorToInt(distance) + " m\n" +
-                "Parts: " + collectedParts + "\n" +
-                "Score: " + score + "\n" +
-                "Drift Score: " + driftScore;
+        if (gameOverStatsText != null)
+        {
+            gameOverStatsText.text =
+                "SCORE: " + score + "\n" +
+                "DISTANCE: " + Mathf.FloorToInt(distance) + " m\n" +
+                "DRIFT SCORE: " + driftScore + "\n" +
+                "PARTS: " + collectedParts;
         }
+
+        if (gameOverDarkOverlay != null)
+        {
+            gameOverDarkOverlay.DOKill();
+            gameOverDarkOverlay.gameObject.SetActive(true);
+            SetGameOverOverlayAlpha(0f);
+
+            gameOverDarkOverlay
+                .DOFade(gameOverOverlayMaxAlpha, gameOverOverlayFadeDuration)
+                .SetEase(Ease.OutQuad)
+                .SetUpdate(true);
+        }
+
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.transform.DOKill();
+            gameOverPanel.SetActive(true);
+            gameOverPanel.transform.localScale = Vector3.zero;
+
+            gameOverPanel.transform
+                .DOScale(Vector3.one, gameOverPanelOpenDuration)
+                .SetEase(Ease.OutBack)
+                .SetUpdate(true);
+        }
+    }
+
+    private void GameOverHomeButtonPressed()
+    {
+        if (gameOverHomeButton != null)
+        {
+            AnimateButton(gameOverHomeButton.transform, GoToHomePage);
+        }
+        else
+        {
+            GoToHomePage();
+        }
+    }
+
+    private void GameOverRetryButtonPressed()
+    {
+        if (gameOverRetryButton != null)
+        {
+            AnimateButton(gameOverRetryButton.transform, RestartGame);
+        }
+        else
+        {
+            RestartGame();
+        }
+    }
+
+    private void GoToHomePage()
+    {
+        Time.timeScale = 1f;
+        SceneManager.LoadScene(mainMenuSceneName);
     }
 
     private void RestartGame()
     {
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+    private void AnimateButton(Transform buttonTransform, TweenCallback onComplete = null)
+    {
+        if (buttonTransform == null)
+        {
+            onComplete?.Invoke();
+            return;
+        }
+
+        buttonTransform.DOKill();
+
+        Vector3 originalScale = Vector3.one;
+
+        buttonTransform
+            .DOScale(originalScale * buttonPressScale, buttonPressDuration)
+            .SetEase(Ease.OutQuad)
+            .SetUpdate(true)
+            .OnComplete(() =>
+            {
+                buttonTransform
+                    .DOScale(originalScale, buttonPressDuration)
+                    .SetEase(Ease.OutBack)
+                    .SetUpdate(true)
+                    .OnComplete(onComplete);
+            });
+    }
+
+    private void SetGameOverOverlayAlpha(float alpha)
+    {
+        if (gameOverDarkOverlay == null)
+        {
+            return;
+        }
+
+        Color color = gameOverDarkOverlay.color;
+        color.a = alpha;
+        gameOverDarkOverlay.color = color;
     }
 }
