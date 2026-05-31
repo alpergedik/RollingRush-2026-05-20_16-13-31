@@ -57,6 +57,10 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float crashSpinAngle = 520f;
     [SerializeField] private float crashLeanAngle = 85f;
 
+    [Header("Audio Settings")]
+    [SerializeField] private float boundaryHitSoundCooldown = 0.35f;
+    private float lastBoundaryHitSoundTime = -999f;
+
     // --- Hidden Settings (Still active in code) ---
     private float visualRollSpeed = 8f;
     private float wheelRadius = 1f;
@@ -140,6 +144,8 @@ public class PlayerController : MonoBehaviour
     {
         if (!CanUpdatePlayer())
         {
+            SoundManager.Instance?.SetRollingIntensity(0f);
+            SoundManager.Instance?.SetDriftIntensity(0f);
             return;
         }
 
@@ -162,6 +168,7 @@ public class PlayerController : MonoBehaviour
         UpdateDriftScore();
         UpdateDriftFX();
         UpdateStoneFX();
+        UpdateGameplayAudio();
     }
 
 
@@ -258,12 +265,19 @@ public class PlayerController : MonoBehaviour
             hasJumped = true;
             jumpLockTimer = jumpGroundLockTime;
             rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            SoundManager.Instance?.PlayJump();
         }
     }
     
     private void UpdateGroundedState()
     {
+        bool wasGrounded = isGrounded;
         isGrounded = IsGrounded();
+        
+        if (!wasGrounded && isGrounded && GameManager.Instance != null && GameManager.Instance.isGameStarted)
+        {
+            SoundManager.Instance?.PlayLanding();
+        }
     }
 
     private bool IsGrounded()
@@ -638,6 +652,16 @@ public class PlayerController : MonoBehaviour
         emission.rateOverTime = new ParticleSystem.MinMaxCurve(rate);
     }
 
+    private void UpdateGameplayAudio()
+    {
+        SoundManager.Instance?.SetDriftIntensity(isGrounded ? driftIntensity : 0f);
+
+        float speed = GetCurrentForwardSpeed();
+        float rollingIntensity = Mathf.InverseLerp(2f, 10f, speed);
+        rollingIntensity *= 1f - Mathf.Clamp01(driftIntensity * 0.6f);
+        SoundManager.Instance?.SetRollingIntensity(isGrounded ? rollingIntensity : 0f);
+    }
+
     private float GetCurrentForwardSpeed()
     {
         if (GameManager.Instance != null)
@@ -674,6 +698,11 @@ public class PlayerController : MonoBehaviour
         if (collision.gameObject.layer == LayerMask.NameToLayer("RoadBoundary"))
         {
             currentHorizontalVelocity = 0f;
+            if (Time.time - lastBoundaryHitSoundTime >= boundaryHitSoundCooldown)
+            {
+                SoundManager.Instance?.PlayBoundaryHit();
+                lastBoundaryHitSoundTime = Time.time;
+            }
         }
     }
     
@@ -721,6 +750,8 @@ public class PlayerController : MonoBehaviour
     }
 
     isCrashing = true;
+    SoundManager.Instance?.StopGameplayLoops();
+    SoundManager.Instance?.PlayGameOver();
     currentHorizontalVelocity = 0f;
     horizontalInput = 0f;
     driftIntensity = 0f;
@@ -856,6 +887,7 @@ public class PlayerController : MonoBehaviour
             {
                 GameManager.Instance.CollectPart();
             }
+            SoundManager.Instance?.PlayCollectiblePickup();
 
             other.gameObject.SetActive(false);
         }

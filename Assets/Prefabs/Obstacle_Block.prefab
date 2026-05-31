@@ -106,7 +106,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ObstacleMover
   moveSpeed: 8
-  disableZ: -20
+  disableZ: -35
 --- !u!65 &4520120485168620616
 BoxCollider:
   m_ObjectHideFlags: 0

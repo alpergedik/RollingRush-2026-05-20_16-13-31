@@ -36,6 +36,7 @@ public class SpeedLinesFXController : MonoBehaviour
                 SetEmission(0f);
             }
             StopSpeedLines(false);
+            SoundManager.Instance?.SetWindIntensity(0f);
             return;
         }
 
@@ -47,6 +48,8 @@ public class SpeedLinesFXController : MonoBehaviour
         float currentSpeed = GameManager.Instance.currentSpeed;
         float speedFactor = Mathf.InverseLerp(minSpeedForLines, fullSpeedForLines, currentSpeed);
         float targetEmission = maxEmissionRate * speedFactor;
+
+        SoundManager.Instance?.SetWindIntensity(speedFactor);
 
         currentEmissionRate = Mathf.MoveTowards(currentEmissionRate, targetEmission, emissionSmoothSpeed * Time.deltaTime);
 
@@ -86,5 +89,10 @@ public class SpeedLinesFXController : MonoBehaviour
                 speedLinesParticle.Stop(true, ParticleSystemStopBehavior.StopEmitting);
             }
         }
+    }
+
+    private void OnDisable()
+    {
+        SoundManager.Instance?.SetWindIntensity(0f);
     }
 }

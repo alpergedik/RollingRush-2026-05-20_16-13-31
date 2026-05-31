@@ -125,3 +125,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dc4e19514e6658f4ab4647124a4428f1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CollectibleMover
+  moveSpeed: 8
+  disableZ: -35
+  rotateSpeed: 180

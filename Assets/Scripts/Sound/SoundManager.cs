@@ -6,6 +6,18 @@ public class SoundManager : MonoBehaviour
 {
     public static SoundManager Instance { get; private set; }
 
+    // --- SES ID SABITLERI ---
+    public const string MUSIC_ID = "music";
+    public const string ROLLING_ID = "rolling";
+    public const string DRIFT_ID = "drift";
+    public const string WIND_ID = "wind";
+    public const string JUMP_ID = "jump";
+    public const string LANDING_ID = "landing";
+    public const string BOUNDARY_ID = "boundary";
+    public const string BUTTON_ID = "button";
+    public const string COLLECTIBLE_ID = "collectible";
+    public const string GAMEOVER_ID = "gameover";
+
     [Serializable]
     public class Sound
     {
@@ -29,9 +41,12 @@ public class SoundManager : MonoBehaviour
     [Header("Sounds")]
     [SerializeField] private List<Sound> sounds = new List<Sound>();
 
-    [Header("Volume")]
+    [Header("Volume Settings")]
     [Range(0f, 1f)]
     [SerializeField] private float masterVolume = 1f;
+
+    [Range(0f, 1f)]
+    [SerializeField] private float musicVolume = 1f;
 
     [Range(0f, 1f)]
     [SerializeField] private float sfxVolume = 1f;
@@ -39,11 +54,11 @@ public class SoundManager : MonoBehaviour
     [Range(0f, 1f)]
     [SerializeField] private float loopVolume = 1f;
 
-    private bool masterMuted;
-    private bool sfxMuted;
-    private bool loopMuted;
+    private bool isMuted;
+    public bool IsMuted => isMuted;
 
     private AudioSource sfxSource;
+    private AudioSource musicSource;
 
     private readonly Dictionary<string, Sound> soundMap = new Dictionary<string, Sound>();
     private readonly Dictionary<string, LoopAudio> activeLoops = new Dictionary<string, LoopAudio>();
@@ -61,7 +76,10 @@ public class SoundManager : MonoBehaviour
         if (dontDestroyOnLoad)
             DontDestroyOnLoad(gameObject);
 
-        CreateSfxSource();
+        // Saved mute state from PlayerPrefs
+        isMuted = PlayerPrefs.GetInt("AudioMuted", 0) == 1;
+
+        CreateAudioSources();
         BuildSoundMap();
         ApplyAllSettings();
     }
@@ -69,24 +87,53 @@ public class SoundManager : MonoBehaviour
     private void OnValidate()
     {
         masterVolume = Mathf.Clamp01(masterVolume);
+        musicVolume = Mathf.Clamp01(musicVolume);
         sfxVolume = Mathf.Clamp01(sfxVolume);
         loopVolume = Mathf.Clamp01(loopVolume);
 
+        if (sounds != null)
+        {
+            foreach (var sound in sounds)
+            {
+                if (sound != null)
+                {
+                    sound.volume = Mathf.Clamp01(sound.volume);
+                    // Eğer yeni eklendiğinde volume 0 ve clip varsa default 1 yapalım
+                    if (sound.volume == 0f && sound.clip != null)
+                    {
+                        sound.volume = 1f;
+                    }
+                }
+            }
+        }
+
         if (Application.isPlaying)
+        {
+            BuildSoundMap();
             ApplyAllSettings();
+        }
     }
 
-    private void CreateSfxSource()
+    private void CreateAudioSources()
     {
+        // SFX Source
         sfxSource = gameObject.AddComponent<AudioSource>();
         sfxSource.playOnAwake = false;
         sfxSource.loop = false;
         sfxSource.spatialBlend = 0f;
+
+        // Music Source
+        musicSource = gameObject.AddComponent<AudioSource>();
+        musicSource.playOnAwake = false;
+        musicSource.loop = true;
+        musicSource.spatialBlend = 0f;
     }
 
     private void BuildSoundMap()
     {
         soundMap.Clear();
+
+        if (sounds == null) return;
 
         foreach (Sound sound in sounds)
         {
@@ -116,53 +163,195 @@ public class SoundManager : MonoBehaviour
     }
 
     // =========================
-    // SFX
+    // MUTE SYSTEM
     // =========================
 
-    public void PlaySFX(string id)
+    /// <summary>
+    /// Oyundaki tüm sesleri açıp kapatır ve durumu kaydeder.
+    /// </summary>
+    public void SetMuted(bool muted)
     {
-        PlaySFX(id, 1f);
+        isMuted = muted;
+        PlayerPrefs.SetInt("AudioMuted", isMuted ? 1 : 0);
+        PlayerPrefs.Save();
+        ApplyAllSettings();
     }
 
-    public void PlaySFX(string id, float volumeScale)
+    /// <summary>
+    /// Mute durumunu tersine çevirir (Açıksa kapatır, kapalıysa açar).
+    /// </summary>
+    public void ToggleMute()
     {
-        if (masterMuted || sfxMuted)
+        SetMuted(!isMuted);
+    }
+
+    // =========================
+    // VOLUME SYSTEM
+    // =========================
+
+    public void SetMasterVolume(float volume)
+    {
+        masterVolume = Mathf.Clamp01(volume);
+        ApplyAllSettings();
+    }
+
+    public void SetMusicVolume(float volume)
+    {
+        musicVolume = Mathf.Clamp01(volume);
+        ApplyAllSettings();
+    }
+
+    public void SetSFXVolume(float volume)
+    {
+        sfxVolume = Mathf.Clamp01(volume);
+        ApplyAllSettings();
+    }
+
+    public void SetLoopVolume(float volume)
+    {
+        loopVolume = Mathf.Clamp01(volume);
+        ApplyAllSettings();
+    }
+
+    public float GetMasterVolume() => masterVolume;
+    public float GetMusicVolume() => musicVolume;
+    public float GetSFXVolume() => sfxVolume;
+    public float GetLoopVolume() => loopVolume;
+
+    // =========================
+    // MUSIC
+    // =========================
+
+    /// <summary>
+    /// Main_Music sesini döngüsel (loop) olarak çalmaya başlar.
+    /// </summary>
+    public void PlayMusic()
+    {
+        Sound sound = GetSound(MUSIC_ID);
+        if (sound == null) return;
+
+        if (musicSource.clip == sound.clip && musicSource.isPlaying)
+        {
+            ApplyMusicSettings(sound);
             return;
+        }
+
+        musicSource.clip = sound.clip;
+        musicSource.Play();
+        ApplyMusicSettings(sound);
+    }
+
+    public void StopMusic()
+    {
+        if (musicSource != null)
+        {
+            musicSource.Stop();
+        }
+    }
+
+    // =========================
+    // SFX WRAPPERS
+    // =========================
+
+    public void PlayButton() => PlaySFX(BUTTON_ID);
+    public void PlayJump() => PlaySFX(JUMP_ID);
+    public void PlayLanding() => PlaySFX(LANDING_ID);
+    public void PlayBoundaryHit() => PlaySFX(BOUNDARY_ID);
+    public void PlayCollectiblePickup() => PlaySFX(COLLECTIBLE_ID);
+    public void PlayGameOver() => PlaySFX(GAMEOVER_ID);
+
+    // =========================
+    // SFX CORE
+    // =========================
+
+    public void PlaySFX(string id, float volumeScale = 1f)
+    {
+        if (isMuted) return;
 
         Sound sound = GetSound(id);
+        if (sound == null) return;
 
-        if (sound == null)
-            return;
-
-        float finalVolumeScale = sound.volume * Mathf.Clamp01(volumeScale);
-
-        sfxSource.PlayOneShot(sound.clip, finalVolumeScale);
+        if (sfxSource != null)
+        {
+            float finalVolumeScale = sound.volume * Mathf.Clamp01(volumeScale) * masterVolume * sfxVolume;
+            sfxSource.PlayOneShot(sound.clip, finalVolumeScale);
+        }
     }
 
     public void StopAllSFX()
     {
-        sfxSource.Stop();
+        if (sfxSource != null)
+        {
+            sfxSource.Stop();
+        }
     }
 
     // =========================
-    // LOOP
+    // GAMEPLAY LOOPS (Rolling, Drift, Wind)
     // =========================
 
-    public void PlayLoop(string id)
+    /// <summary>
+    /// Toprak/Rolling loop sesinin intensity (şiddet) değerini ayarlar (0 - 1 arası).
+    /// </summary>
+    public void SetRollingIntensity(float intensity) => UpdateGameplayLoop(ROLLING_ID, intensity);
+
+    /// <summary>
+    /// Drift loop sesinin intensity (şiddet) değerini ayarlar (0 - 1 arası).
+    /// </summary>
+    public void SetDriftIntensity(float intensity) => UpdateGameplayLoop(DRIFT_ID, intensity);
+
+    /// <summary>
+    /// Rüzgar loop sesinin intensity (şiddet) değerini ayarlar (0 - 1 arası).
+    /// </summary>
+    public void SetWindIntensity(float intensity) => UpdateGameplayLoop(WIND_ID, intensity);
+
+    private void UpdateGameplayLoop(string id, float intensity)
     {
-        PlayLoop(id, 1f);
+        intensity = Mathf.Clamp01(intensity);
+        if (intensity > 0)
+        {
+            if (!IsLoopPlaying(id))
+            {
+                PlayLoop(id, intensity);
+            }
+            else
+            {
+                SetLoopVolumeScale(id, intensity);
+            }
+        }
+        else
+        {
+            if (IsLoopPlaying(id))
+            {
+                SetLoopVolumeScale(id, 0f);
+            }
+        }
     }
 
-    public void PlayLoop(string id, float volumeScale)
+    /// <summary>
+    /// Oyun içindeki dinamik loop seslerinin (rolling, drift, wind) tamamını durdurur.
+    /// </summary>
+    public void StopGameplayLoops()
+    {
+        StopLoop(ROLLING_ID);
+        StopLoop(DRIFT_ID);
+        StopLoop(WIND_ID);
+    }
+
+    // =========================
+    // LOOP CORE
+    // =========================
+
+    public void PlayLoop(string id, float volumeScale = 1f)
     {
         Sound sound = GetSound(id);
+        if (sound == null) return;
 
-        if (sound == null)
-            return;
-
-        if (activeLoops.ContainsKey(id))
+        if (activeLoops.TryGetValue(id, out LoopAudio activeLoop))
         {
             SetLoopVolumeScale(id, volumeScale);
+            if (activeLoop.source != null && !activeLoop.source.isPlaying)
+                activeLoop.source.Play();
             return;
         }
 
@@ -183,9 +372,7 @@ public class SoundManager : MonoBehaviour
         };
 
         activeLoops.Add(id, loopAudio);
-
         ApplyLoopSettings(loopAudio);
-
         source.Play();
     }
 
@@ -207,7 +394,6 @@ public class SoundManager : MonoBehaviour
             if (loopAudio.source != null)
                 Destroy(loopAudio.source.gameObject);
         }
-
         activeLoops.Clear();
     }
 
@@ -229,102 +415,7 @@ public class SoundManager : MonoBehaviour
     }
 
     // =========================
-    // VOLUME
-    // =========================
-
-    public void SetMasterVolume(float volume)
-    {
-        masterVolume = Mathf.Clamp01(volume);
-        ApplyAllSettings();
-    }
-
-    public void SetSFXVolume(float volume)
-    {
-        sfxVolume = Mathf.Clamp01(volume);
-        ApplyAllSettings();
-    }
-
-    public void SetLoopVolume(float volume)
-    {
-        loopVolume = Mathf.Clamp01(volume);
-        ApplyAllSettings();
-    }
-
-    public float GetMasterVolume()
-    {
-        return masterVolume;
-    }
-
-    public float GetSFXVolume()
-    {
-        return sfxVolume;
-    }
-
-    public float GetLoopVolume()
-    {
-        return loopVolume;
-    }
-
-    // =========================
-    // MUTE
-    // =========================
-
-    public void MuteAll()
-    {
-        masterMuted = true;
-        ApplyAllSettings();
-    }
-
-    public void UnmuteAll()
-    {
-        masterMuted = false;
-        ApplyAllSettings();
-    }
-
-    public void ToggleMuteAll()
-    {
-        masterMuted = !masterMuted;
-        ApplyAllSettings();
-    }
-
-    public void MuteSFX()
-    {
-        sfxMuted = true;
-        ApplyAllSettings();
-    }
-
-    public void UnmuteSFX()
-    {
-        sfxMuted = false;
-        ApplyAllSettings();
-    }
-
-    public void ToggleMuteSFX()
-    {
-        sfxMuted = !sfxMuted;
-        ApplyAllSettings();
-    }
-
-    public void MuteLoops()
-    {
-        loopMuted = true;
-        ApplyAllSettings();
-    }
-
-    public void UnmuteLoops()
-    {
-        loopMuted = false;
-        ApplyAllSettings();
-    }
-
-    public void ToggleMuteLoops()
-    {
-        loopMuted = !loopMuted;
-        ApplyAllSettings();
-    }
-
-    // =========================
-    // INTERNAL
+    // INTERNAL SETTINGS APPLY
     // =========================
 
     private Sound GetSound(string id)
@@ -339,6 +430,12 @@ public class SoundManager : MonoBehaviour
     private void ApplyAllSettings()
     {
         ApplySfxSettings();
+        
+        Sound musicSound = GetSound(MUSIC_ID);
+        if (musicSound != null)
+        {
+            ApplyMusicSettings(musicSound);
+        }
 
         foreach (LoopAudio loopAudio in activeLoops.Values)
         {
@@ -348,11 +445,18 @@ public class SoundManager : MonoBehaviour
 
     private void ApplySfxSettings()
     {
-        if (sfxSource == null)
-            return;
+        if (sfxSource == null) return;
+        
+        sfxSource.mute = isMuted;
+    }
 
-        sfxSource.volume = masterVolume * sfxVolume;
-        sfxSource.mute = masterMuted || sfxMuted;
+    private void ApplyMusicSettings(Sound sound)
+    {
+        if (musicSource == null) return;
+        
+        float soundVolume = sound != null ? sound.volume : 1f;
+        musicSource.volume = masterVolume * musicVolume * soundVolume;
+        musicSource.mute = isMuted;
     }
 
     private void ApplyLoopSettings(LoopAudio loopAudio)
@@ -366,6 +470,6 @@ public class SoundManager : MonoBehaviour
             loopAudio.sound.volume *
             loopAudio.volumeScale;
 
-        loopAudio.source.mute = masterMuted || loopMuted;
+        loopAudio.source.mute = isMuted;
     }
 }

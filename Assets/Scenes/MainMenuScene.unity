@@ -119,6 +119,86 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &56544956
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 56544958}
+  - component: {fileID: 56544957}
+  m_Layer: 0
+  m_Name: SoundManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &56544957
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 56544956}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 91ba02369488b43039c87f418e4149cd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SoundManager
+  dontDestroyOnLoad: 1
+  sounds:
+  - id: music
+    clip: {fileID: 8300000, guid: 5a904302c181f439ea4b4cc4df8a5071, type: 3}
+    volume: 1
+  - id: rolling
+    clip: {fileID: 8300000, guid: 4346b1450a54049268897fd751c26dc2, type: 3}
+    volume: 1
+  - id: drift
+    clip: {fileID: 8300000, guid: 9888aafbe0e8c4ef5adb9f2df600d6b9, type: 3}
+    volume: 1
+  - id: wind
+    clip: {fileID: 8300000, guid: daf4a04f7810a4348bdc5ecdfbc9394c, type: 3}
+    volume: 0.753
+  - id: jump
+    clip: {fileID: 8300000, guid: a54bd03a3ad3547e7ab07205cc17c46a, type: 3}
+    volume: 1
+  - id: landing
+    clip: {fileID: 8300000, guid: 2319f7b2db0044cdbb976ffbfa0adf50, type: 3}
+    volume: 1
+  - id: boundary
+    clip: {fileID: 8300000, guid: 0f21cf19f710745d687d575096bf84d6, type: 3}
+    volume: 1
+  - id: button
+    clip: {fileID: 8300000, guid: 8c8f4a6c6a4e5414facf4d2a2e839be4, type: 3}
+    volume: 1
+  - id: collectible
+    clip: {fileID: 8300000, guid: 6755291f61d75467ea9e6c6837fe971c, type: 3}
+    volume: 1
+  - id: gameover
+    clip: {fileID: 8300000, guid: 120423ef4f8a44bdba421a502f55b118, type: 3}
+    volume: 1
+  masterVolume: 1
+  musicVolume: 0.4
+  sfxVolume: 0.8
+  loopVolume: 0.6
+--- !u!4 &56544958
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 56544956}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &297432224
 GameObject:
   m_ObjectHideFlags: 0
@@ -1801,7 +1881,7 @@ Transform:
   m_GameObject: {fileID: 1871381662}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 443.98346, y: 694.9592, z: 3033.1748}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1891,3 +1971,4 @@ SceneRoots:
   - {fileID: 425881567}
   - {fileID: 1640183732}
   - {fileID: 1871381664}
+  - {fileID: 56544958}

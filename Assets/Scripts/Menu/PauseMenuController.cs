@@ -31,7 +31,6 @@ public class PauseMenuController : MonoBehaviour
 
     private RectTransform pausePanelRect;
     private bool isPaused;
-    private bool isMuted;
 
     private void Awake()
     {
@@ -55,7 +54,6 @@ public class PauseMenuController : MonoBehaviour
 
     private void Start()
     {
-        isMuted = PlayerPrefs.GetInt("IsMuted", 0) == 1;
         ApplySoundState();
 
         if (pauseButton != null)
@@ -96,6 +94,7 @@ public class PauseMenuController : MonoBehaviour
 
     private void PauseButtonPressed()
     {
+        SoundManager.Instance?.PlayButton();
         if (pauseButton != null)
         {
             AnimateButton(pauseButton.transform, OpenPauseMenu);
@@ -108,6 +107,7 @@ public class PauseMenuController : MonoBehaviour
 
     private void ContinueButtonPressed()
     {
+        SoundManager.Instance?.PlayButton();
         if (continueButton != null)
         {
             AnimateButton(continueButton.transform, ClosePauseMenu);
@@ -120,6 +120,7 @@ public class PauseMenuController : MonoBehaviour
 
     private void CloseButtonPressed()
     {
+        SoundManager.Instance?.PlayButton();
         if (closeButton != null)
         {
             AnimateButton(closeButton.transform, ClosePauseMenu);
@@ -132,6 +133,7 @@ public class PauseMenuController : MonoBehaviour
 
     private void HomeButtonPressed()
     {
+        SoundManager.Instance?.PlayButton();
         if (homeButton != null)
         {
             AnimateButton(homeButton.transform, GoToHomePage);
@@ -144,6 +146,7 @@ public class PauseMenuController : MonoBehaviour
 
     private void RetryButtonPressed()
     {
+        SoundManager.Instance?.PlayButton();
         if (retryButton != null)
         {
             AnimateButton(retryButton.transform, RetryGame);
@@ -156,16 +159,19 @@ public class PauseMenuController : MonoBehaviour
 
     private void MuteButtonPressed()
     {
+        SoundManager.Instance?.PlayButton();
         if (muteButton != null)
         {
             AnimateButton(muteButton.transform, () =>
             {
-                SetMuted(true);
+                SoundManager.Instance?.SetMuted(true);
+                ApplySoundState();
             });
         }
         else
         {
-            SetMuted(true);
+            SoundManager.Instance?.SetMuted(true);
+            ApplySoundState();
         }
     }
 
@@ -175,12 +181,16 @@ public class PauseMenuController : MonoBehaviour
         {
             AnimateButton(unmuteButton.transform, () =>
             {
-                SetMuted(false);
+                SoundManager.Instance?.SetMuted(false);
+                SoundManager.Instance?.PlayButton();
+                ApplySoundState();
             });
         }
         else
         {
-            SetMuted(false);
+            SoundManager.Instance?.SetMuted(false);
+            SoundManager.Instance?.PlayButton();
+            ApplySoundState();
         }
     }
 
@@ -275,21 +285,9 @@ public class PauseMenuController : MonoBehaviour
         SceneManager.LoadScene(SceneManager.GetActiveScene().name);
     }
 
-    private void SetMuted(bool muted)
-    {
-        isMuted = muted;
-
-        PlayerPrefs.SetInt("IsMuted", isMuted ? 1 : 0);
-        PlayerPrefs.Save();
-
-        ApplySoundState();
-
-        Debug.Log(isMuted ? "Ses kapatıldı." : "Ses açıldı.");
-    }
-
     private void ApplySoundState()
     {
-        AudioListener.volume = isMuted ? 0f : 1f;
+        bool isMuted = SoundManager.Instance != null && SoundManager.Instance.IsMuted;
 
         if (muteButton != null)
         {

@@ -127,7 +127,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ObstacleMover
   moveSpeed: 8
-  disableZ: -20
+  disableZ: -35
 --- !u!1001 &8822727160520541055
 PrefabInstance:
   m_ObjectHideFlags: 0

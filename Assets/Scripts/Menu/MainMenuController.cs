@@ -29,7 +29,6 @@ public class MainMenuController : MonoBehaviour
 
     private RectTransform settingsPanelRect;
     private bool isSettingsOpen;
-    private bool isMuted;
 
     private void Awake()
     {
@@ -53,8 +52,8 @@ public class MainMenuController : MonoBehaviour
 
     private void Start()
     {
-        isMuted = PlayerPrefs.GetInt("IsMuted", 0) == 1;
         ApplySoundState();
+        SoundManager.Instance?.PlayMusic();
 
         if (playButton != null)
         {
@@ -81,18 +80,22 @@ public class MainMenuController : MonoBehaviour
             unmuteButton.onClick.AddListener(UnmuteButtonPressed);
         }
     }
+    
     private void MuteButtonPressed()
     {
+        SoundManager.Instance?.PlayButton();
         if (muteButton != null)
         {
             AnimateButton(muteButton.transform, () =>
             {
-                SetMuted(true);
+                SoundManager.Instance?.SetMuted(true);
+                ApplySoundState();
             });
         }
         else
         {
-            SetMuted(true);
+            SoundManager.Instance?.SetMuted(true);
+            ApplySoundState();
         }
     }
 
@@ -102,37 +105,22 @@ public class MainMenuController : MonoBehaviour
         {
             AnimateButton(unmuteButton.transform, () =>
             {
-                SetMuted(false);
+                SoundManager.Instance?.SetMuted(false);
+                SoundManager.Instance?.PlayButton();
+                ApplySoundState();
             });
         }
         else
         {
-            SetMuted(false);
-        }
-    }
-
-    private void SetMuted(bool muted)
-    {
-        isMuted = muted;
-
-        PlayerPrefs.SetInt("IsMuted", isMuted ? 1 : 0);
-        PlayerPrefs.Save();
-
-        ApplySoundState();
-
-        if (isMuted)
-        {
-            Debug.Log("Ses kapatıldı.");
-        }
-        else
-        {
-            Debug.Log("Ses açıldı.");
+            SoundManager.Instance?.SetMuted(false);
+            SoundManager.Instance?.PlayButton();
+            ApplySoundState();
         }
     }
 
     private void ApplySoundState()
     {
-        AudioListener.volume = isMuted ? 0f : 1f;
+        bool isMuted = SoundManager.Instance != null && SoundManager.Instance.IsMuted;
 
         if (muteButton != null)
         {
@@ -144,8 +132,10 @@ public class MainMenuController : MonoBehaviour
             unmuteButton.gameObject.SetActive(isMuted);
         }
     }
+    
     private void PlayButtonPressed()
     {
+        SoundManager.Instance?.PlayButton();
         if (playButton != null)
         {
             AnimateButton(playButton.transform, PlayGame);
@@ -158,6 +148,7 @@ public class MainMenuController : MonoBehaviour
 
     private void SettingsButtonPressed()
     {
+        SoundManager.Instance?.PlayButton();
         if (settingsButton != null)
         {
             AnimateButton(settingsButton.transform, OpenSettings);
@@ -170,6 +161,7 @@ public class MainMenuController : MonoBehaviour
 
     private void CloseSettingsButtonPressed()
     {
+        SoundManager.Instance?.PlayButton();
         if (closeSettingsButton != null)
         {
             AnimateButton(closeSettingsButton.transform, CloseSettings);
