@@ -1,6 +1,7 @@
 using UnityEngine;
 using DG.Tweening;
 
+[RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement")]
@@ -44,6 +45,7 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float driftSideViewAngle = 28f;
 
     [Header("Drift FX")]
+    [SerializeField] private float driftFxThreshold = 0.1f;
     [SerializeField] private ParticleSystem driftDustParticle;
     [SerializeField] private float maxDriftDustEmission = 45f;
     [SerializeField] private Transform cameraTransform;
@@ -81,6 +83,7 @@ public class PlayerController : MonoBehaviour
     private float driftFadeSpeed = 4f;
     private float driftExtraLeanAngle = 8f;
 
+    [SerializeField] private float driftScoreThreshold = 0.15f;
     private float driftScorePerSecond = 25f;
     private float driftScoreTickInterval = 0.1f;
 
@@ -113,16 +116,26 @@ public class PlayerController : MonoBehaviour
     private bool isGrounded;
     private bool isCrashing;
     
-
     private float driftIntensity;
     private float driftScoreTimer;
-    
+
+    // Public Read-Only Properties
+    public bool IsGrounded => isGrounded;
+    public bool IsCrashing => isCrashing;
+    public float DriftIntensity => driftIntensity;
+    public float CurrentHorizontalVelocity => currentHorizontalVelocity;
+    public float CurrentForwardSpeed => GetCurrentForwardSpeed();
+
+    public bool IsDriftingForFX =>
+        isGrounded &&
+        !isCrashing &&
+        driftIntensity > driftFxThreshold;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
         startZ = transform.position.z;
-        
+    
         roadDriftSeed = Random.Range(0f, 1000f);
 
         SetDriftDustEmission(0f);
@@ -140,6 +153,21 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void OnDisable()
+    {
+        transform.DOKill();
+
+        if (leanPivot != null)
+        {
+            leanPivot.DOKill();
+        }
+
+        if (rollPivot != null)
+        {
+            rollPivot.DOKill();
+        }
+    }
+
     private void Update()
     {
         if (!CanUpdatePlayer())
@@ -148,6 +176,9 @@ public class PlayerController : MonoBehaviour
             SoundManager.Instance?.SetDriftIntensity(0f);
             return;
         }
+
+        ReadHorizontalInput();
+        UpdateGroundedState();
 
         if (jumpLockTimer > 0f)
         {
@@ -159,8 +190,6 @@ public class PlayerController : MonoBehaviour
             hasJumped = false;
         }
 
-        ReadHorizontalInput();
-        UpdateGroundedState();
         HandleJumpInput();
         RotateWheelVisual();
         UpdateDriftState();
@@ -170,7 +199,6 @@ public class PlayerController : MonoBehaviour
         UpdateStoneFX();
         UpdateGameplayAudio();
     }
-
 
     private void FixedUpdate()
     {
@@ -272,7 +300,7 @@ public class PlayerController : MonoBehaviour
     private void UpdateGroundedState()
     {
         bool wasGrounded = isGrounded;
-        isGrounded = IsGrounded();
+        isGrounded = CheckIsGrounded();
         
         if (!wasGrounded && isGrounded && GameManager.Instance != null && GameManager.Instance.isGameStarted)
         {
@@ -280,24 +308,26 @@ public class PlayerController : MonoBehaviour
         }
     }
 
-    private bool IsGrounded()
+    private bool CheckIsGrounded()
     {
-        Vector3 origin = groundCheckPoint != null ? groundCheckPoint.position : transform.position + Vector3.up * 0.4f;
+        Vector3 origin = groundCheckPoint != null
+            ? groundCheckPoint.position
+            : transform.position + Vector3.up * 0.4f;
 
-        bool hit = Physics.SphereCast(
+        bool hit = Physics.CheckSphere(
             origin,
             groundCheckRadius,
-            Vector3.down,
-            out RaycastHit hitInfo,
-            groundCheckDistance,
             groundLayer,
             QueryTriggerInteraction.Ignore
         );
 
         if (debugGroundCheck)
         {
-            Color debugColor = hit ? Color.green : Color.red;
-            Debug.DrawRay(origin, Vector3.down * groundCheckDistance, debugColor);
+            Debug.DrawRay(
+                origin,
+                hit ? Vector3.up * 0.5f : Vector3.down * 0.5f,
+                hit ? Color.green : Color.red
+            );
         }
 
         return hit;
@@ -345,7 +375,8 @@ public class PlayerController : MonoBehaviour
 
         float targetDriftIntensity = 0f;
 
-        if (isGrounded && hasForwardSpeed && hasLateralMovement && hasSteerInput)        {
+        if (isGrounded && hasForwardSpeed && hasLateralMovement && hasSteerInput)
+        {
             float forwardFactor = Mathf.InverseLerp(
                 minDriftForwardSpeed,
                 fullDriftForwardSpeed,
@@ -463,7 +494,7 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        if (!isGrounded || driftIntensity < 0.15f)
+        if (!isGrounded || driftIntensity < driftScoreThreshold)
         {
             driftScoreTimer = 0f;
             return;
@@ -493,7 +524,7 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        if (isGrounded && driftIntensity > 0.1f)
+        if (isGrounded && driftIntensity > driftFxThreshold)
         {
             if (!driftDustParticle.isPlaying)
             {
@@ -743,121 +774,122 @@ public class PlayerController : MonoBehaviour
     }
     
     private void PlayCrashAnimation(Collision collision)
-{
-    if (isCrashing)
     {
-        return;
-    }
+        if (isCrashing)
+        {
+            return;
+        }
 
-    isCrashing = true;
-    SoundManager.Instance?.StopGameplayLoops();
-    SoundManager.Instance?.PlayGameOver();
-    currentHorizontalVelocity = 0f;
-    horizontalInput = 0f;
-    driftIntensity = 0f;
-    driftScoreTimer = 0f;
+        isCrashing = true;
+        SoundManager.Instance?.StopGameplayLoops();
+        SoundManager.Instance?.PlayGameOver();
+        currentHorizontalVelocity = 0f;
+        horizontalInput = 0f;
+        driftIntensity = 0f;
+        driftScoreTimer = 0f;
 
-    SetDriftDustEmission(0f);
+        SetDriftDustEmission(0f);
 
-    if (driftDustParticle != null)
-    {
-        driftDustParticle.Stop(true, ParticleSystemStopBehavior.StopEmitting);
-    }
+        if (driftDustParticle != null)
+        {
+            driftDustParticle.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+        }
 
-    SetStoneEmission(0f);
+        SetStoneEmission(0f);
 
-    if (stoneParticle != null)
-    {
-        stoneParticle.Stop(true, ParticleSystemStopBehavior.StopEmitting);
-    }
+        if (stoneParticle != null)
+        {
+            stoneParticle.Stop(true, ParticleSystemStopBehavior.StopEmitting);
+        }
 
-    Collider[] colliders = GetComponentsInChildren<Collider>();
+        Collider[] colliders = GetComponentsInChildren<Collider>();
 
-    for (int i = 0; i < colliders.Length; i++)
-    {
-        colliders[i].enabled = false;
-    }
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            colliders[i].enabled = false;
+        }
 
-    if (rb != null)
-    {
-        rb.linearVelocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
-        rb.isKinematic = true;
-    }
+        if (rb != null)
+        {
+            rb.linearVelocity = Vector3.zero;
+            rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = true;
+        }
 
-    transform.DOKill();
+        transform.DOKill();
 
-    if (leanPivot != null)
-    {
-        leanPivot.DOKill();
-    }
+        if (leanPivot != null)
+        {
+            leanPivot.DOKill();
+        }
 
-    if (rollPivot != null)
-    {
-        rollPivot.DOKill();
-    }
+        if (rollPivot != null)
+        {
+            rollPivot.DOKill();
+        }
 
-    float hitDirection = GetCrashDirection(collision);
+        float hitDirection = GetCrashDirection(collision);
 
-    Vector3 startPosition = transform.position;
+        Vector3 startPosition = transform.position;
 
-    Vector3 impactPosition = startPosition + new Vector3(
-        hitDirection * crashSideForce,
-        crashUpForce,
-        -crashKnockbackZ
-    );
-
-    Vector3 fallPosition = new Vector3(
-        impactPosition.x,
-        Mathf.Max(0.15f, startPosition.y - crashFallDownY),
-        impactPosition.z
-    );
-
-    Sequence crashSequence = DOTween.Sequence();
-
-    crashSequence.Append(
-        transform.DOMove(impactPosition, crashAnimationDuration * 0.35f)
-            .SetEase(crashImpactEase)
-    );
-
-    crashSequence.Append(
-        transform.DOMove(fallPosition, crashAnimationDuration * 0.65f)
-            .SetEase(crashFallEase)
-    );
-
-    if (leanPivot != null)
-    {
-        Vector3 targetLeanRotation = new Vector3(
-            65f,
-            hitDirection * 25f,
-            -hitDirection * crashLeanAngle
+        Vector3 impactPosition = startPosition + new Vector3(
+            hitDirection * crashSideForce,
+            crashUpForce,
+            -crashKnockbackZ
         );
 
-        crashSequence.Join(
-            leanPivot.DOLocalRotate(
-                targetLeanRotation,
-                crashAnimationDuration,
-                RotateMode.FastBeyond360
-            ).SetEase(Ease.OutCubic)
+        Vector3 fallPosition = new Vector3(
+            impactPosition.x,
+            Mathf.Max(0.15f, startPosition.y - crashFallDownY),
+            impactPosition.z
         );
+
+        Sequence crashSequence = DOTween.Sequence();
+
+        crashSequence.Append(
+            transform.DOMove(impactPosition, crashAnimationDuration * 0.35f)
+                .SetEase(crashImpactEase)
+        );
+
+        crashSequence.Append(
+            transform.DOMove(fallPosition, crashAnimationDuration * 0.65f)
+                .SetEase(crashFallEase)
+        );
+
+        if (leanPivot != null)
+        {
+            Vector3 targetLeanRotation = new Vector3(
+                65f,
+                hitDirection * 25f,
+                -hitDirection * crashLeanAngle
+            );
+
+            crashSequence.Join(
+                leanPivot.DOLocalRotate(
+                    targetLeanRotation,
+                    crashAnimationDuration,
+                    RotateMode.FastBeyond360
+                ).SetEase(Ease.OutCubic)
+            );
+        }
+
+        if (rollPivot != null)
+        {
+            crashSequence.Join(
+                rollPivot.DOLocalRotate(
+                    new Vector3(0f, 0f, crashSpinAngle * hitDirection),
+                    crashAnimationDuration,
+                    RotateMode.LocalAxisAdd
+                ).SetEase(Ease.OutQuart)
+            );
+        }
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.GameOver(crashAnimationDuration + 0.05f);
+        }
     }
 
-    if (rollPivot != null)
-    {
-        crashSequence.Join(
-            rollPivot.DOLocalRotate(
-                new Vector3(0f, 0f, crashSpinAngle * hitDirection),
-                crashAnimationDuration,
-                RotateMode.LocalAxisAdd
-            ).SetEase(Ease.OutQuart)
-        );
-    }
-
-    if (GameManager.Instance != null)
-    {
-        GameManager.Instance.GameOver(crashAnimationDuration + 0.05f);
-    }
-}
     private float GetCrashDirection(Collision collision)
     {
         if (collision.contactCount > 0)

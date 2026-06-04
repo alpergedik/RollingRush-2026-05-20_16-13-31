@@ -4352,6 +4352,18 @@ PrefabInstance:
       propertyPath: m_ConstrainProportionsScale
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 2629557107531741081, guid: 84a9ac41f8ef04ac383e98af2b21f592, type: 3}
+      propertyPath: m_Size.x
+      value: 9.999997
+      objectReference: {fileID: 0}
+    - target: {fileID: 2629557107531741081, guid: 84a9ac41f8ef04ac383e98af2b21f592, type: 3}
+      propertyPath: m_Size.y
+      value: 1.0382258
+      objectReference: {fileID: 0}
+    - target: {fileID: 2629557107531741081, guid: 84a9ac41f8ef04ac383e98af2b21f592, type: 3}
+      propertyPath: m_Center.y
+      value: -0.41616324
+      objectReference: {fileID: 0}
     - target: {fileID: 5470927080541797130, guid: 84a9ac41f8ef04ac383e98af2b21f592, type: 3}
       propertyPath: m_Name
       value: new_2road1_plane 1

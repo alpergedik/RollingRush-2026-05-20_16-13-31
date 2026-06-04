@@ -8973,6 +8973,18 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 4910800758986313345, guid: 3d1b1b76992bf4e448d0f72bacf4f80b, type: 3}
+      propertyPath: m_Size.x
+      value: 9.999997
+      objectReference: {fileID: 0}
+    - target: {fileID: 4910800758986313345, guid: 3d1b1b76992bf4e448d0f72bacf4f80b, type: 3}
+      propertyPath: m_Size.y
+      value: 1.0382258
+      objectReference: {fileID: 0}
+    - target: {fileID: 4910800758986313345, guid: 3d1b1b76992bf4e448d0f72bacf4f80b, type: 3}
+      propertyPath: m_Center.y
+      value: -0.41616324
+      objectReference: {fileID: 0}
     - target: {fileID: 7863814063591056245, guid: 3d1b1b76992bf4e448d0f72bacf4f80b, type: 3}
       propertyPath: m_LocalScale.x
       value: 0.8
