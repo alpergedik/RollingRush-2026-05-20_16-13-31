@@ -15,9 +15,7 @@ public class ObstacleSpawner : MonoBehaviour
     public float minSpawnX = -4.2f;
     public float maxSpawnX = 4.2f;
 
-    [Header("Timing")]
-    public float minSpawnInterval = 1.0f;
-    public float maxSpawnInterval = 2.0f;
+    // Timing read from GameBalanceConfig at runtime
 
     private readonly List<GameObject> obstaclePool = new List<GameObject>();
     private float spawnTimer;
@@ -108,6 +106,16 @@ public class ObstacleSpawner : MonoBehaviour
 
     private void SetRandomSpawnInterval()
     {
-        currentSpawnInterval = Random.Range(minSpawnInterval, maxSpawnInterval);
+        if (GameManager.Instance != null && GameManager.Instance.balanceConfig != null)
+        {
+            currentSpawnInterval = Random.Range(
+                GameManager.Instance.Balance.obstacleMinSpawnInterval,
+                GameManager.Instance.Balance.obstacleMaxSpawnInterval
+            );
+        }
+        else
+        {
+            currentSpawnInterval = Random.Range(1.0f, 2.0f);
+        }
     }
 }

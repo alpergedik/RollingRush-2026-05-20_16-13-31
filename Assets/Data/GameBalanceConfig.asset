@@ -1,0 +1,84 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e54e5f9c5050249b4ab3cd9a8672549d, type: 3}
+  m_Name: GameBalanceConfig
+  m_EditorClassIdentifier: Assembly-CSharp::GameBalanceConfig
+  activeProfile: 1
+  easyProfile:
+    defaultSpeed: 3
+    boostSpeed: 5
+    brakeSpeed: 1
+    speedChangeRate: 3
+    maxHorizontalSpeed: 2.5
+    horizontalAcceleration: 7
+    horizontalDeceleration: 6
+    targetJumpHeight: 0.8
+    minDriftForwardSpeed: 4
+    fullDriftForwardSpeed: 5
+    minDriftHorizontalSpeed: 0.9
+    fullDriftHorizontalSpeed: 2.5
+    driftBuildSpeed: 3
+    driftFadeSpeed: 2.5
+    driftSideViewAngle: 16
+    driftExtraLeanAngle: 4
+    speedLinesMinSpeed: 4
+    speedLinesFullSpeed: 5
+    obstacleMinSpawnInterval: 3.5
+    obstacleMaxSpawnInterval: 5
+    collectibleMinSpawnInterval: 1.2
+    collectibleMaxSpawnInterval: 2.2
+  normalProfile:
+    defaultSpeed: 5
+    boostSpeed: 8
+    brakeSpeed: 2
+    speedChangeRate: 5
+    maxHorizontalSpeed: 3.8
+    horizontalAcceleration: 10
+    horizontalDeceleration: 8
+    targetJumpHeight: 0.8
+    minDriftForwardSpeed: 6
+    fullDriftForwardSpeed: 8
+    minDriftHorizontalSpeed: 1.4
+    fullDriftHorizontalSpeed: 3.8
+    driftBuildSpeed: 3.5
+    driftFadeSpeed: 3
+    driftSideViewAngle: 18
+    driftExtraLeanAngle: 5
+    speedLinesMinSpeed: 6
+    speedLinesFullSpeed: 8
+    obstacleMinSpawnInterval: 2.4
+    obstacleMaxSpawnInterval: 3.6
+    collectibleMinSpawnInterval: 0.9
+    collectibleMaxSpawnInterval: 1.8
+  hardProfile:
+    defaultSpeed: 8
+    boostSpeed: 10
+    brakeSpeed: 6
+    speedChangeRate: 5
+    maxHorizontalSpeed: 5
+    horizontalAcceleration: 13
+    horizontalDeceleration: 10
+    targetJumpHeight: 0.8
+    minDriftForwardSpeed: 9
+    fullDriftForwardSpeed: 10
+    minDriftHorizontalSpeed: 1.8
+    fullDriftHorizontalSpeed: 5
+    driftBuildSpeed: 4
+    driftFadeSpeed: 3.5
+    driftSideViewAngle: 22
+    driftExtraLeanAngle: 6
+    speedLinesMinSpeed: 9
+    speedLinesFullSpeed: 10
+    obstacleMinSpawnInterval: 1.8
+    obstacleMaxSpawnInterval: 2.8
+    collectibleMinSpawnInterval: 0.7
+    collectibleMaxSpawnInterval: 1.5

@@ -96,7 +96,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3100614345262635131}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: RightBoundaries
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -777,7 +777,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 9115293704062410384}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: LeftBoundaries
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1133,7 +1133,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2510810817921623679}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: MiddleBoundaries
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1239,7 +1239,7 @@ Transform:
   m_GameObject: {fileID: 8721409189104490891}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: -9}
+  m_LocalPosition: {x: 0, y: 0, z: -40}
   m_LocalScale: {x: 1.4184, y: 1, z: 2.6725}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -4361,8 +4361,16 @@ PrefabInstance:
       value: 1.0382258
       objectReference: {fileID: 0}
     - target: {fileID: 2629557107531741081, guid: 84a9ac41f8ef04ac383e98af2b21f592, type: 3}
+      propertyPath: m_Size.z
+      value: 14.891499
+      objectReference: {fileID: 0}
+    - target: {fileID: 2629557107531741081, guid: 84a9ac41f8ef04ac383e98af2b21f592, type: 3}
       propertyPath: m_Center.y
       value: -0.41616324
+      objectReference: {fileID: 0}
+    - target: {fileID: 2629557107531741081, guid: 84a9ac41f8ef04ac383e98af2b21f592, type: 3}
+      propertyPath: m_Center.z
+      value: -0.059171524
       objectReference: {fileID: 0}
     - target: {fileID: 5470927080541797130, guid: 84a9ac41f8ef04ac383e98af2b21f592, type: 3}
       propertyPath: m_Name

@@ -2,8 +2,7 @@ using UnityEngine;
 
 public class CollectibleMover : MonoBehaviour
 {
-    public float moveSpeed = 8f;
-    public float disableZ = -20f;
+    public float disableZ = -40f;
     public float rotateSpeed = 180f;
 
     private void FixedUpdate()
@@ -13,7 +12,7 @@ public class CollectibleMover : MonoBehaviour
             return;
         }
 
-        float speed = moveSpeed;
+        float speed = 8f;
 
         if (GameManager.Instance != null)
         {

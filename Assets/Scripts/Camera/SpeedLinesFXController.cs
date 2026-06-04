@@ -5,9 +5,7 @@ public class SpeedLinesFXController : MonoBehaviour
     [Header("References")]
     [SerializeField] private ParticleSystem speedLinesParticle;
 
-    [Header("Speed Threshold")]
-    [SerializeField] private float minSpeedForLines = 12f;
-    [SerializeField] private float fullSpeedForLines = 16f;
+    // Speed Thresholds read from GameBalanceConfig at runtime
 
     [Header("Emission")]
     [SerializeField] private float maxEmissionRate = 45f;
@@ -46,7 +44,10 @@ public class SpeedLinesFXController : MonoBehaviour
     private void UpdateSpeedLines()
     {
         float currentSpeed = GameManager.Instance.currentSpeed;
-        float speedFactor = Mathf.InverseLerp(minSpeedForLines, fullSpeedForLines, currentSpeed);
+        float minSpeed = GameManager.Instance.balanceConfig != null ? GameManager.Instance.Balance.speedLinesMinSpeed : 12f;
+        float fullSpeed = GameManager.Instance.balanceConfig != null ? GameManager.Instance.Balance.speedLinesFullSpeed : 16f;
+
+        float speedFactor = Mathf.InverseLerp(minSpeed, fullSpeed, currentSpeed);
         float targetEmission = maxEmissionRate * speedFactor;
 
         SoundManager.Instance?.SetWindIntensity(speedFactor);

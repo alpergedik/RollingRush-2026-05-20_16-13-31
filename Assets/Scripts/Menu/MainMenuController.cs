@@ -10,6 +10,7 @@ public class MainMenuController : MonoBehaviour
 
     [Header("Panels")]
     [SerializeField] private GameObject settingsMenuPanel;
+    [SerializeField] private GameObject difficultyMenuPanel;
     [SerializeField] private Image darkOverlay;
 
     [Header("Buttons")]
@@ -19,6 +20,12 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private Button muteButton;
     [SerializeField] private Button unmuteButton;
 
+    [Header("Difficulty Buttons")]
+    [SerializeField] private Button easyButton;
+    [SerializeField] private Button normalButton;
+    [SerializeField] private Button hardButton;
+    [SerializeField] private Button closeDifficultyButton;
+
     [Header("Tween Settings")]
     [SerializeField] private float buttonPressScale = 0.9f;
     [SerializeField] private float buttonPressDuration = 0.08f;
@@ -27,8 +34,17 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private float overlayFadeDuration = 0.2f;
     [SerializeField] private float overlayMaxAlpha = 0.55f;
 
+    private enum OpenMenuPanel
+    {
+        None,
+        Settings,
+        Difficulty
+    }
+
+    private OpenMenuPanel openMenuPanel = OpenMenuPanel.None;
+
     private RectTransform settingsPanelRect;
-    private bool isSettingsOpen;
+    private RectTransform difficultyPanelRect;
 
     private void Awake()
     {
@@ -40,6 +56,17 @@ public class MainMenuController : MonoBehaviour
             if (settingsPanelRect != null)
             {
                 settingsPanelRect.localScale = Vector3.zero;
+            }
+        }
+
+        if (difficultyMenuPanel != null)
+        {
+            difficultyPanelRect = difficultyMenuPanel.GetComponent<RectTransform>();
+            difficultyMenuPanel.SetActive(false);
+
+            if (difficultyPanelRect != null)
+            {
+                difficultyPanelRect.localScale = Vector3.zero;
             }
         }
 
@@ -79,6 +106,11 @@ public class MainMenuController : MonoBehaviour
         {
             unmuteButton.onClick.AddListener(UnmuteButtonPressed);
         }
+
+        easyButton?.onClick.AddListener(EasyButtonPressed);
+        normalButton?.onClick.AddListener(NormalButtonPressed);
+        hardButton?.onClick.AddListener(HardButtonPressed);
+        closeDifficultyButton?.onClick.AddListener(CloseDifficultyButtonPressed);
     }
     
     private void MuteButtonPressed()
@@ -138,11 +170,54 @@ public class MainMenuController : MonoBehaviour
         SoundManager.Instance?.PlayButton();
         if (playButton != null)
         {
-            AnimateButton(playButton.transform, PlayGame);
+            AnimateButton(playButton.transform, OpenDifficulty);
         }
         else
         {
-            PlayGame();
+            OpenDifficulty();
+        }
+    }
+
+    private void EasyButtonPressed()
+    {
+        SelectDifficultyAndPlay(DifficultyProfile.Easy, easyButton);
+    }
+
+    private void NormalButtonPressed()
+    {
+        SelectDifficultyAndPlay(DifficultyProfile.Normal, normalButton);
+    }
+
+    private void HardButtonPressed()
+    {
+        SelectDifficultyAndPlay(DifficultyProfile.Hard, hardButton);
+    }
+
+    private void CloseDifficultyButtonPressed()
+    {
+        SoundManager.Instance?.PlayButton();
+        if (closeDifficultyButton != null)
+        {
+            AnimateButton(closeDifficultyButton.transform, CloseDifficulty);
+        }
+        else
+        {
+            CloseDifficulty();
+        }
+    }
+
+    private void SelectDifficultyAndPlay(DifficultyProfile difficulty, Button selectedButton)
+    {
+        DifficultySelection.SetSelectedDifficulty(difficulty);
+        SoundManager.Instance?.PlayButton();
+
+        if (selectedButton != null)
+        {
+            AnimateButton(selectedButton.transform, () => PlayGame(selectedButton));
+        }
+        else
+        {
+            PlayGame(null);
         }
     }
 
@@ -172,9 +247,17 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
-    public void PlayGame()
+    public void PlayGame(Button sourceButton = null)
     {
-        SceneManager.LoadScene(gameSceneName);
+        if (SceneTransitionManager.Instance != null)
+        {
+            SceneTransitionManager.Instance.TransitionToScene(gameSceneName, sourceButton != null ? sourceButton.transform as RectTransform : null);
+        }
+        else
+        {
+            Time.timeScale = 1f;
+            SceneManager.LoadScene(gameSceneName);
+        }
     }
 
     public void OpenSettings()
@@ -184,12 +267,12 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        if (isSettingsOpen)
+        if (openMenuPanel != OpenMenuPanel.None)
         {
             return;
         }
 
-        isSettingsOpen = true;
+        openMenuPanel = OpenMenuPanel.Settings;
 
         settingsPanelRect.DOKill();
 
@@ -219,12 +302,12 @@ public class MainMenuController : MonoBehaviour
             return;
         }
 
-        if (!isSettingsOpen)
+        if (openMenuPanel != OpenMenuPanel.Settings)
         {
             return;
         }
 
-        isSettingsOpen = false;
+        openMenuPanel = OpenMenuPanel.None;
 
         settingsPanelRect.DOKill();
 
@@ -234,6 +317,79 @@ public class MainMenuController : MonoBehaviour
             .OnComplete(() =>
             {
                 settingsMenuPanel.SetActive(false);
+            });
+
+        if (darkOverlay != null)
+        {
+            darkOverlay.DOKill();
+
+            darkOverlay
+                .DOFade(0f, overlayFadeDuration)
+                .SetEase(Ease.OutQuad)
+                .OnComplete(() =>
+                {
+                    darkOverlay.gameObject.SetActive(false);
+                });
+        }
+    }
+
+    public void OpenDifficulty()
+    {
+        if (difficultyMenuPanel == null || difficultyPanelRect == null)
+        {
+            return;
+        }
+
+        if (openMenuPanel != OpenMenuPanel.None)
+        {
+            return;
+        }
+
+        openMenuPanel = OpenMenuPanel.Difficulty;
+
+        difficultyPanelRect.DOKill();
+
+        if (darkOverlay != null)
+        {
+            darkOverlay.DOKill();
+            darkOverlay.gameObject.SetActive(true);
+            SetOverlayAlpha(0f);
+
+            darkOverlay
+                .DOFade(overlayMaxAlpha, overlayFadeDuration)
+                .SetEase(Ease.OutQuad);
+        }
+
+        difficultyMenuPanel.SetActive(true);
+        difficultyPanelRect.localScale = Vector3.zero;
+
+        difficultyPanelRect
+            .DOScale(Vector3.one, panelOpenDuration)
+            .SetEase(Ease.OutBack);
+    }
+
+    public void CloseDifficulty()
+    {
+        if (difficultyMenuPanel == null || difficultyPanelRect == null)
+        {
+            return;
+        }
+
+        if (openMenuPanel != OpenMenuPanel.Difficulty)
+        {
+            return;
+        }
+
+        openMenuPanel = OpenMenuPanel.None;
+
+        difficultyPanelRect.DOKill();
+
+        difficultyPanelRect
+            .DOScale(Vector3.zero, panelCloseDuration)
+            .SetEase(Ease.InBack)
+            .OnComplete(() =>
+            {
+                difficultyMenuPanel.SetActive(false);
             });
 
         if (darkOverlay != null)
@@ -284,5 +440,18 @@ public class MainMenuController : MonoBehaviour
         Color color = darkOverlay.color;
         color.a = alpha;
         darkOverlay.color = color;
+    }
+    private void DarkOverlayPressed()
+    {
+        switch (openMenuPanel)
+        {
+            case OpenMenuPanel.Settings:
+                CloseSettings();
+                break;
+
+            case OpenMenuPanel.Difficulty:
+                CloseDifficulty();
+                break;
+        }
     }
 }

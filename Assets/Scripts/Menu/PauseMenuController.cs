@@ -275,14 +275,28 @@ public class PauseMenuController : MonoBehaviour
 
     private void GoToHomePage()
     {
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(homeSceneName);
+        if (SceneTransitionManager.Instance != null)
+        {
+            SceneTransitionManager.Instance.TransitionToScene(homeSceneName, homeButton != null ? homeButton.transform as RectTransform : null);
+        }
+        else
+        {
+            Time.timeScale = 1f;
+            SceneManager.LoadScene(homeSceneName);
+        }
     }
 
     private void RetryGame()
     {
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        if (SceneTransitionManager.Instance != null)
+        {
+            SceneTransitionManager.Instance.TransitionToScene(SceneManager.GetActiveScene().name, retryButton != null ? retryButton.transform as RectTransform : null);
+        }
+        else
+        {
+            Time.timeScale = 1f;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+        }
     }
 
     private void ApplySoundState()

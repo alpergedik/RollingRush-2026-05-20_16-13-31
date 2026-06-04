@@ -2,8 +2,7 @@ using UnityEngine;
 
 public class ObstacleMover : MonoBehaviour
 {
-    public float moveSpeed = 8f;
-    public float disableZ = -20f;
+    public float disableZ = -40f;
 
     private void FixedUpdate()
     {
@@ -12,7 +11,7 @@ public class ObstacleMover : MonoBehaviour
             return;
         }
 
-        float speed = moveSpeed;
+        float speed = 8f;
 
         if (GameManager.Instance != null)
         {

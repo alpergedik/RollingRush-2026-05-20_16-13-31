@@ -16,18 +16,43 @@ public class GameManager : MonoBehaviour
     [Header("Speed")]
     public float currentSpeed = 0f;
 
-    [SerializeField] private float defaultSpeed = 10f;
-    [SerializeField] private float boostSpeed = 16f;
-    [SerializeField] private float brakeSpeed = 5f;
-    [SerializeField] private float speedChangeRate = 10f;
+    [Header("Game Balance")]
+    public GameBalanceConfig balanceConfig;
+    
+    // Cached at startup
+    private BalanceSettings _cachedBalance;
+    public BalanceSettings Balance 
+    {
+        get 
+        {
+            if (_cachedBalance == null)
+            {
+                _cachedBalance = balanceConfig != null ? balanceConfig.Current : new BalanceSettings();
+            }
+            return _cachedBalance;
+        }
+    }
 
-    [Header("Score")]
+    [Header("Score Settings")]
+    [SerializeField] private float distanceScoreMultiplier = 5f;
+    [SerializeField] private int partScoreValue = 150;
+
+    [Header("Tutorial")]
+    [SerializeField] private GameObject tutorialPanel;
+    [SerializeField] private bool showTutorialOnStart = true;
+    private bool isWaitingForTutorialInput;
+
+    private const string HighScorePlayerPrefsKey = "RollingRush_HighScore";
+    public int HighScore { get; private set; }
+
     public float distance = 0f;
     public int score = 0;
-    public int scoreMultiplier = 10;
     public int collectedParts = 0;
-    public int partScoreValue = 100;
     public int driftScore = 0;
+
+    public int DistanceScore => Mathf.FloorToInt(distance * distanceScoreMultiplier);
+    public int CollectibleScore => collectedParts * partScoreValue;
+    public int TotalScore => DistanceScore + CollectibleScore + driftScore;
 
     [Header("Gameplay UI")]
     public GameObject scoreText;
@@ -35,7 +60,14 @@ public class GameManager : MonoBehaviour
     [Header("Game Over UI")]
     [SerializeField] private GameObject gameOverPanel;
     [SerializeField] private Image gameOverDarkOverlay;
-    [SerializeField] private TMP_Text gameOverStatsText;
+    
+    [Header("Game Over Dynamic Value UI")]
+    [SerializeField] private TextMeshProUGUI gameOverDistanceValueText;
+    [SerializeField] private TextMeshProUGUI gameOverDriftScoreValueText;
+    [SerializeField] private TextMeshProUGUI gameOverCollectedPartsValueText;
+    [SerializeField] private TextMeshProUGUI gameOverTotalScoreValueText;
+    
+    [Header("Game Over Buttons")]
     [SerializeField] private Button gameOverHomeButton;
     [SerializeField] private Button gameOverRetryButton;
 
@@ -49,10 +81,42 @@ public class GameManager : MonoBehaviour
     [SerializeField] private float buttonPressScale = 0.9f;
     [SerializeField] private float buttonPressDuration = 0.08f;
 
-    private int bonusScore = 0;
+    [Header("Game Over Animation Settings")]
+    [SerializeField] private float distanceCountDuration = 0.5f;
+    [SerializeField] private float driftScoreCountDuration = 0.7f;
+    [SerializeField] private float collectedPartsCountDuration = 0.6f;
+    [SerializeField] private float totalScoreCountDuration = 0.9f;
+
+    [Header("Game Over Total Score Attention")]
+    [SerializeField] private float totalScoreAttentionScale = 1.06f;
+    [SerializeField] private float totalScoreAttentionDuration = 0.65f;
+
+    [Header("Game Over High Score UI")]
+    [SerializeField] private TextMeshProUGUI gameOverHighScoreValueText;
+    [SerializeField] private TextMeshProUGUI newHighScoreText;
+
+    [Header("New High Score Animation")]
+    [SerializeField] private float newHighScoreScale = 1.15f;
+    [SerializeField] private float newHighScoreAnimationDuration = 0.35f;
+    [SerializeField] private Color newHighScoreColorA = Color.yellow;
+    [SerializeField] private Color newHighScoreColorB = Color.white;
+
+    private Sequence gameOverScoreSequence;
+    private Tween totalScoreAttentionTween;
+    private Tween newHighScoreTween;
+
 
     private void Awake()
     {
+        if (balanceConfig == null)
+        {
+            Debug.LogError("GameBalanceConfig is not assigned on GameManager.");
+            enabled = false;
+            return;
+        }
+
+        balanceConfig.activeProfile = DifficultySelection.GetSelectedDifficulty(balanceConfig.activeProfile);
+
         Instance = this;
 
         Time.timeScale = 1f;
@@ -65,11 +129,15 @@ public class GameManager : MonoBehaviour
         score = 0;
         driftScore = 0;
         collectedParts = 0;
-        bonusScore = 0;
 
         if (scoreText != null)
         {
             scoreText.SetActive(false);
+        }
+
+        if (newHighScoreText != null)
+        {
+            newHighScoreText.gameObject.SetActive(false);
         }
 
         if (gameOverPanel != null)
@@ -84,6 +152,7 @@ public class GameManager : MonoBehaviour
             SetGameOverOverlayAlpha(0f);
         }
 
+        LoadHighScore();
         UpdateScoreUI();
     }
 
@@ -98,15 +167,49 @@ public class GameManager : MonoBehaviour
         {
             gameOverRetryButton.onClick.AddListener(GameOverRetryButtonPressed);
         }
+
+        if (showTutorialOnStart && tutorialPanel != null)
+        {
+            tutorialPanel.SetActive(true);
+            tutorialPanel.transform.localScale = Vector3.one;
+            isWaitingForTutorialInput = true;
+            isGameStarted = false;
+            currentSpeed = 0f;
+        }
+        else
+        {
+            if (tutorialPanel != null)
+            {
+                tutorialPanel.SetActive(false);
+            }
+            StartCoroutine(StartGameAfterTutorial());
+        }
     }
 
     private void Update()
     {
         if (!isGameStarted)
         {
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (isWaitingForTutorialInput && Input.anyKeyDown)
             {
-                StartGame();
+                isWaitingForTutorialInput = false;
+
+                if (tutorialPanel != null)
+                {
+                    tutorialPanel.transform.DOKill();
+                    tutorialPanel.transform
+                        .DOScale(Vector3.zero, 0.25f)
+                        .SetEase(Ease.InBack)
+                        .SetUpdate(true)
+                        .OnComplete(() =>
+                        {
+                            StartCoroutine(StartGameAfterTutorial());
+                        });
+                }
+                else
+                {
+                    StartCoroutine(StartGameAfterTutorial());
+                }
             }
 
             return;
@@ -123,13 +226,27 @@ public class GameManager : MonoBehaviour
         }
 
         UpdateSpeed();
-        UpdateScore();
+        distance += currentSpeed * Time.deltaTime;
+        score = TotalScore;
+        UpdateScoreUI();
+    }
+
+    private IEnumerator StartGameAfterTutorial()
+    {
+        if (tutorialPanel != null)
+        {
+            tutorialPanel.SetActive(false);
+        }
+
+        yield return null;
+
+        StartGame();
     }
 
     private void StartGame()
     {
         isGameStarted = true;
-        currentSpeed = defaultSpeed;
+        currentSpeed = Balance.defaultSpeed;
 
         if (scoreText != null)
         {
@@ -141,31 +258,24 @@ public class GameManager : MonoBehaviour
 
     private void UpdateSpeed()
     {
-        float targetSpeed = defaultSpeed;
+        float targetSpeed = Balance.defaultSpeed;
 
         if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
         {
-            targetSpeed = boostSpeed;
+            targetSpeed = Balance.boostSpeed;
         }
         else if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
         {
-            targetSpeed = brakeSpeed;
+            targetSpeed = Balance.brakeSpeed;
         }
 
         currentSpeed = Mathf.MoveTowards(
             currentSpeed,
             targetSpeed,
-            speedChangeRate * Time.deltaTime
+            Balance.speedChangeRate * Time.deltaTime
         );
     }
 
-    private void UpdateScore()
-    {
-        distance += currentSpeed * Time.deltaTime;
-        score = Mathf.FloorToInt(distance * scoreMultiplier) + bonusScore;
-
-        UpdateScoreUI();
-    }
 
     public void CollectPart()
     {
@@ -175,8 +285,7 @@ public class GameManager : MonoBehaviour
         }
 
         collectedParts++;
-        bonusScore += partScoreValue;
-
+        score = TotalScore;
         UpdateScoreUI();
     }
 
@@ -193,7 +302,7 @@ public class GameManager : MonoBehaviour
         }
 
         driftScore += amount;
-
+        score = TotalScore;
         UpdateScoreUI();
     }
 
@@ -213,9 +322,9 @@ public class GameManager : MonoBehaviour
 
         scoreTextTMP.text =
             "Distance: " + Mathf.FloorToInt(distance) + " m\n" +
-            "Parts: " + collectedParts + "\n" +
-            "Score: " + score + "\n" +
-            "Drift Score: " + driftScore + "\n";
+            "Score: " + TotalScore.ToString("N0") + "\n" +
+            "Drift Score: " + driftScore.ToString("N0") + "\n" +
+            "Parts: " + collectedParts.ToString("N0");
     }
 
     public void GameOver(float delayBeforeFreeze = 0f)
@@ -227,6 +336,7 @@ public class GameManager : MonoBehaviour
 
         isGameOver = true;
         currentSpeed = 0f;
+        score = TotalScore;
 
         if (delayBeforeFreeze > 0f)
         {
@@ -254,15 +364,6 @@ public class GameManager : MonoBehaviour
             scoreText.SetActive(false);
         }
 
-        if (gameOverStatsText != null)
-        {
-            gameOverStatsText.text =
-                "SCORE: " + score + "\n" +
-                "DISTANCE: " + Mathf.FloorToInt(distance) + " m\n" +
-                "DRIFT SCORE: " + driftScore + "\n" +
-                "PARTS: " + collectedParts;
-        }
-
         if (gameOverDarkOverlay != null)
         {
             gameOverDarkOverlay.DOKill();
@@ -285,6 +386,22 @@ public class GameManager : MonoBehaviour
                 .DOScale(Vector3.one, gameOverPanelOpenDuration)
                 .SetEase(Ease.OutBack)
                 .SetUpdate(true);
+
+            bool isNewHighScore = CheckAndSaveHighScore();
+
+            UpdateHighScoreUI();
+
+            if (newHighScoreText != null)
+            {
+                newHighScoreText.gameObject.SetActive(isNewHighScore);
+            }
+
+            PlayGameOverScoreAnimation();
+
+            if (isNewHighScore)
+            {
+                PlayNewHighScoreAnimation();
+            }
         }
     }
 
@@ -314,14 +431,40 @@ public class GameManager : MonoBehaviour
 
     private void GoToHomePage()
     {
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(mainMenuSceneName);
+        gameOverScoreSequence?.Kill();
+        totalScoreAttentionTween?.Kill();
+        newHighScoreTween?.Kill();
+        newHighScoreText?.transform.DOKill();
+        newHighScoreText?.DOKill();
+
+        if (SceneTransitionManager.Instance != null)
+        {
+            SceneTransitionManager.Instance.TransitionToScene(mainMenuSceneName, gameOverHomeButton != null ? gameOverHomeButton.transform as RectTransform : null);
+        }
+        else
+        {
+            Time.timeScale = 1f;
+            SceneManager.LoadScene(mainMenuSceneName);
+        }
     }
 
     private void RestartGame()
     {
-        Time.timeScale = 1f;
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        gameOverScoreSequence?.Kill();
+        totalScoreAttentionTween?.Kill();
+        newHighScoreTween?.Kill();
+        newHighScoreText?.transform.DOKill();
+        newHighScoreText?.DOKill();
+
+        if (SceneTransitionManager.Instance != null)
+        {
+            SceneTransitionManager.Instance.TransitionToScene(SceneManager.GetActiveScene().name, gameOverRetryButton != null ? gameOverRetryButton.transform as RectTransform : null);
+        }
+        else
+        {
+            Time.timeScale = 1f;
+            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        }
     }
 
     private void AnimateButton(Transform buttonTransform, TweenCallback onComplete = null)
@@ -360,5 +503,239 @@ public class GameManager : MonoBehaviour
         Color color = gameOverDarkOverlay.color;
         color.a = alpha;
         gameOverDarkOverlay.color = color;
+    }
+
+    private void UpdateGameOverUI()
+    {
+        if (gameOverDistanceValueText != null)
+        {
+            gameOverDistanceValueText.text = $"{Mathf.FloorToInt(distance):N0} m";
+        }
+        else
+        {
+            Debug.LogWarning("Game Over Distance Value Text is not assigned.");
+        }
+
+        if (gameOverDriftScoreValueText != null)
+        {
+            gameOverDriftScoreValueText.text = driftScore.ToString("N0");
+        }
+        else
+        {
+            Debug.LogWarning("Game Over Drift Score Value Text is not assigned.");
+        }
+
+        if (gameOverCollectedPartsValueText != null)
+        {
+            gameOverCollectedPartsValueText.text = collectedParts.ToString("N0");
+        }
+        else
+        {
+            Debug.LogWarning("Game Over Collected Parts Value Text is not assigned.");
+        }
+
+        if (gameOverTotalScoreValueText != null)
+        {
+            gameOverTotalScoreValueText.text = TotalScore.ToString("N0");
+        }
+        else
+        {
+            Debug.LogWarning("Game Over Total Score Value Text is not assigned.");
+        }
+    }
+
+    private void PlayGameOverScoreAnimation()
+    {
+        gameOverScoreSequence?.Kill();
+        totalScoreAttentionTween?.Kill();
+        newHighScoreTween?.Kill();
+
+        if (gameOverTotalScoreValueText != null)
+        {
+            gameOverTotalScoreValueText.transform.DOKill();
+            gameOverTotalScoreValueText.transform.localScale = Vector3.one;
+        }
+
+        int finalDistance = Mathf.FloorToInt(distance);
+        int finalDriftScore = driftScore;
+        int finalCollectedParts = collectedParts;
+        int finalTotalScore = TotalScore;
+
+        if (gameOverDistanceValueText != null)
+        {
+            gameOverDistanceValueText.text = "0 m";
+        }
+
+        if (gameOverDriftScoreValueText != null)
+        {
+            gameOverDriftScoreValueText.text = "0";
+        }
+
+        if (gameOverCollectedPartsValueText != null)
+        {
+            gameOverCollectedPartsValueText.text = "0";
+        }
+
+        if (gameOverTotalScoreValueText != null)
+        {
+            gameOverTotalScoreValueText.text = "0";
+        }
+
+        gameOverScoreSequence = DOTween.Sequence()
+            .SetUpdate(true);
+
+        if (gameOverDistanceValueText != null)
+        {
+            gameOverScoreSequence.Join(
+                DOTween.To(
+                    () => 0,
+                    value => gameOverDistanceValueText.text = $"{value:N0} m",
+                    finalDistance,
+                    distanceCountDuration
+                ).SetEase(Ease.OutCubic)
+            );
+        }
+
+        if (gameOverDriftScoreValueText != null)
+        {
+            gameOverScoreSequence.Join(
+                DOTween.To(
+                    () => 0,
+                    value => gameOverDriftScoreValueText.text = value.ToString("N0"),
+                    finalDriftScore,
+                    driftScoreCountDuration
+                ).SetEase(Ease.OutCubic)
+            );
+        }
+
+        if (gameOverCollectedPartsValueText != null)
+        {
+            gameOverScoreSequence.Join(
+                DOTween.To(
+                    () => 0,
+                    value => gameOverCollectedPartsValueText.text = value.ToString("N0"),
+                    finalCollectedParts,
+                    collectedPartsCountDuration
+                ).SetEase(Ease.OutCubic)
+            );
+        }
+
+        if (gameOverTotalScoreValueText != null)
+        {
+            gameOverScoreSequence.Join(
+                DOTween.To(
+                    () => 0,
+                    value => gameOverTotalScoreValueText.text = value.ToString("N0"),
+                    finalTotalScore,
+                    totalScoreCountDuration
+                ).SetEase(Ease.OutCubic)
+            );
+        }
+
+        gameOverScoreSequence.OnComplete(() =>
+        {
+            UpdateGameOverUI();
+            StartTotalScoreAttentionAnimation();
+        });
+    }
+
+    private void StartTotalScoreAttentionAnimation()
+    {
+        totalScoreAttentionTween?.Kill();
+
+        if (gameOverTotalScoreValueText == null)
+        {
+            return;
+        }
+
+        Transform totalScoreTransform = gameOverTotalScoreValueText.transform;
+
+        totalScoreTransform.DOKill();
+        totalScoreTransform.localScale = Vector3.one;
+
+        totalScoreAttentionTween = totalScoreTransform
+            .DOScale(Vector3.one * totalScoreAttentionScale, totalScoreAttentionDuration)
+            .SetEase(Ease.InOutSine)
+            .SetLoops(-1, LoopType.Yoyo)
+            .SetUpdate(true);
+    }
+
+    private void OnDestroy()
+    {
+        gameOverScoreSequence?.Kill();
+        totalScoreAttentionTween?.Kill();
+        newHighScoreTween?.Kill();
+    }
+
+    private void LoadHighScore()
+    {
+        HighScore = PlayerPrefs.GetInt(HighScorePlayerPrefsKey, 0);
+    }
+
+    private bool CheckAndSaveHighScore()
+    {
+        int finalScore = TotalScore;
+
+        if (finalScore <= HighScore)
+        {
+            return false;
+        }
+
+        HighScore = finalScore;
+
+        PlayerPrefs.SetInt(HighScorePlayerPrefsKey, HighScore);
+        PlayerPrefs.Save();
+
+        return true;
+    }
+
+    private void UpdateHighScoreUI()
+    {
+        if (gameOverHighScoreValueText != null)
+        {
+            gameOverHighScoreValueText.text = HighScore.ToString("N0");
+        }
+    }
+
+    private void PlayNewHighScoreAnimation()
+    {
+        newHighScoreTween?.Kill();
+
+        if (newHighScoreText == null)
+        {
+            return;
+        }
+
+        newHighScoreText.gameObject.SetActive(true);
+        newHighScoreText.transform.DOKill();
+        newHighScoreText.DOKill();
+
+        newHighScoreText.transform.localScale = Vector3.one;
+        newHighScoreText.color = newHighScoreColorA;
+
+        Sequence sequence = DOTween.Sequence()
+            .SetUpdate(true);
+
+        sequence.Append(
+            newHighScoreText.transform
+                .DOScale(Vector3.one * newHighScoreScale, newHighScoreAnimationDuration)
+                .SetEase(Ease.OutBack)
+        );
+
+        sequence.Append(
+            newHighScoreText.transform
+                .DOScale(Vector3.one, newHighScoreAnimationDuration)
+                .SetEase(Ease.InOutSine)
+        );
+
+        sequence.Join(
+            newHighScoreText
+                .DOColor(newHighScoreColorB, newHighScoreAnimationDuration)
+                .SetEase(Ease.InOutSine)
+        );
+
+        sequence.SetLoops(-1, LoopType.Yoyo);
+
+        newHighScoreTween = sequence;
     }
 }

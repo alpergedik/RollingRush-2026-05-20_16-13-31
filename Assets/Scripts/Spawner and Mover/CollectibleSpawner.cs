@@ -15,9 +15,7 @@ public class CollectibleSpawner : MonoBehaviour
     public float minSpawnX = -4.2f;
     public float maxSpawnX = 4.2f;
 
-    [Header("Timing")]
-    public float minSpawnInterval = 0.5f;
-    public float maxSpawnInterval = 1.2f;
+    // Timing read from GameBalanceConfig at runtime
 
     private readonly List<GameObject> collectiblePool = new List<GameObject>();
     private float spawnTimer;
@@ -97,6 +95,16 @@ public class CollectibleSpawner : MonoBehaviour
 
     private void SetRandomSpawnInterval()
     {
-        currentSpawnInterval = Random.Range(minSpawnInterval, maxSpawnInterval);
+        if (GameManager.Instance != null && GameManager.Instance.balanceConfig != null)
+        {
+            currentSpawnInterval = Random.Range(
+                GameManager.Instance.Balance.collectibleMinSpawnInterval,
+                GameManager.Instance.Balance.collectibleMaxSpawnInterval
+            );
+        }
+        else
+        {
+            currentSpawnInterval = Random.Range(0.5f, 1.2f);
+        }
     }
 }

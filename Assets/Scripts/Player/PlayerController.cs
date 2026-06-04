@@ -4,17 +4,16 @@ using DG.Tweening;
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
 {
-    [Header("Movement")]
-    [Tooltip("Player'ın sağ-sol maksimum hareket hızı.")]
-    [SerializeField] private float maxHorizontalSpeed = 7f;
-    [SerializeField] private float horizontalAcceleration = 20f;
-    [SerializeField] private float horizontalDeceleration = 14f;
-    [SerializeField] private float jumpForce = 7f;
+    [Header("Game Balance Cache")]
+    private BalanceSettings balance;
+
+    [Header("Wheel Settings")]
+    [Tooltip("Teker yarıçapı, dönüş hızını hesaplamak için kullanılır.")]
+    [SerializeField] private float wheelRadius = 1f;
 
     [Header("Ground Check")]
     [SerializeField] private Transform groundCheckPoint;
     [SerializeField] private LayerMask groundLayer;
-    [SerializeField] private float groundCheckDistance = 1.5f;
     [Tooltip("SphereCast genişliği. Zemin algısı kopuyorsa artırılabilir.")]
     [SerializeField] private float groundCheckRadius = 0.35f;
     [SerializeField] private bool debugGroundCheck = false;
@@ -32,17 +31,6 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float roadDriftStrength = 0.8f;
     [Tooltip("Bozuk yol yön değişiminin ne kadar hızlı değişeceği.")]
     [SerializeField] private float roadDriftChangeSpeed = 0.35f;
-
-    [Header("Drift")]
-    [SerializeField] private bool enableDrift = true;
-    [Tooltip("Bu hızın altında drift başlamaz.")]
-    [SerializeField] private float minDriftForwardSpeed = 11f;
-    [Tooltip("Bu hızda drift intensity maksimuma yaklaşır.")]
-    [SerializeField] private float fullDriftForwardSpeed = 16f;
-    [Tooltip("Yatay hız bu değerin altındaysa drift başlamaz.")]
-    [SerializeField] private float minDriftHorizontalSpeed = 2.5f;
-    [Tooltip("Drift sırasında tekerin yan yüzeyini göstermek için Y eksenindeki ekstra dönüş.")]
-    [SerializeField] private float driftSideViewAngle = 28f;
 
     [Header("Drift FX")]
     [SerializeField] private float driftFxThreshold = 0.1f;
@@ -64,8 +52,6 @@ public class PlayerController : MonoBehaviour
     private float lastBoundaryHitSoundTime = -999f;
 
     // --- Hidden Settings (Still active in code) ---
-    private float visualRollSpeed = 8f;
-    private float wheelRadius = 1f;
     private float leanSmooth = 10f;
     
     private float idleWobbleLeanAmount = 3f;
@@ -78,13 +64,8 @@ public class PlayerController : MonoBehaviour
     private float highSpeedWobbleAmountMultiplier = 1.25f;
     private float lowSpeedWobbleAmountMultiplier = 0.55f;
 
-    private float fullDriftHorizontalSpeed = 7f;
-    private float driftBuildSpeed = 5f;
-    private float driftFadeSpeed = 4f;
-    private float driftExtraLeanAngle = 8f;
-
     [SerializeField] private float driftScoreThreshold = 0.15f;
-    private float driftScorePerSecond = 25f;
+    private float driftScorePerSecond = 40f;
     private float driftScoreTickInterval = 0.1f;
 
     private float driftDustBackwardVelocity = 15f;
@@ -170,6 +151,18 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+        if (balance == null)
+        {
+            if (GameManager.Instance != null && GameManager.Instance.balanceConfig != null)
+            {
+                balance = GameManager.Instance.Balance;
+            }
+            else
+            {
+                balance = new BalanceSettings(); // Fallback
+            }
+        }
+
         if (!CanUpdatePlayer())
         {
             SoundManager.Instance?.SetRollingIntensity(0f);
@@ -244,7 +237,7 @@ public class PlayerController : MonoBehaviour
 
     private void MoveHorizontally()
     {
-        float targetVelocity = horizontalInput * maxHorizontalSpeed;
+        float targetVelocity = horizontalInput * balance.maxHorizontalSpeed;
 
         float roadDrift = 0f;
 
@@ -258,14 +251,14 @@ public class PlayerController : MonoBehaviour
             roadDrift = (noise - 0.5f) * 2f * roadDriftStrength;
 
             targetVelocity += roadDrift;
-            targetVelocity = Mathf.Clamp(targetVelocity, -maxHorizontalSpeed, maxHorizontalSpeed);
+            targetVelocity = Mathf.Clamp(targetVelocity, -balance.maxHorizontalSpeed, balance.maxHorizontalSpeed);
         }
 
         currentRoadDrift = roadDrift;
 
         float speedChangeRate = Mathf.Abs(horizontalInput) > 0.01f
-            ? horizontalAcceleration
-            : horizontalDeceleration;
+            ? balance.horizontalAcceleration
+            : balance.horizontalDeceleration;
 
         currentHorizontalVelocity = Mathf.MoveTowards(
             currentHorizontalVelocity,
@@ -292,7 +285,10 @@ public class PlayerController : MonoBehaviour
         {
             hasJumped = true;
             jumpLockTimer = jumpGroundLockTime;
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            
+            float jumpVelocity = Mathf.Sqrt(2f * Mathf.Abs(Physics.gravity.y) * balance.targetJumpHeight);
+            rb.AddForce(Vector3.up * jumpVelocity, ForceMode.VelocityChange);
+            
             SoundManager.Instance?.PlayJump();
         }
     }
@@ -340,12 +336,7 @@ public class PlayerController : MonoBehaviour
             return;
         }
 
-        float speed = visualRollSpeed;
-
-        if (GameManager.Instance != null)
-        {
-            speed = GameManager.Instance.currentSpeed;
-        }
+        float speed = GameManager.Instance != null ? GameManager.Instance.currentSpeed : referenceSpeed;
 
         float rotationAmount = (speed / wheelRadius) * Mathf.Rad2Deg * Time.deltaTime;
 
@@ -354,23 +345,12 @@ public class PlayerController : MonoBehaviour
 
     private void UpdateDriftState()
     {
-        if (!enableDrift)
-        {
-            driftIntensity = Mathf.MoveTowards(
-                driftIntensity,
-                0f,
-                driftFadeSpeed * Time.deltaTime
-            );
-
-            return;
-        }
-
         float forwardSpeed = GetCurrentForwardSpeed();
         float lateralSpeed = Mathf.Abs(currentHorizontalVelocity);
         float inputStrength = Mathf.Abs(horizontalInput);
 
-        bool hasForwardSpeed = forwardSpeed >= minDriftForwardSpeed;
-        bool hasLateralMovement = lateralSpeed >= minDriftHorizontalSpeed;
+        bool hasForwardSpeed = forwardSpeed >= balance.minDriftForwardSpeed;
+        bool hasLateralMovement = lateralSpeed >= balance.minDriftHorizontalSpeed;
         bool hasSteerInput = inputStrength > 0.1f;
 
         float targetDriftIntensity = 0f;
@@ -378,14 +358,14 @@ public class PlayerController : MonoBehaviour
         if (isGrounded && hasForwardSpeed && hasLateralMovement && hasSteerInput)
         {
             float forwardFactor = Mathf.InverseLerp(
-                minDriftForwardSpeed,
-                fullDriftForwardSpeed,
+                balance.minDriftForwardSpeed,
+                balance.fullDriftForwardSpeed,
                 forwardSpeed
             );
 
             float lateralFactor = Mathf.InverseLerp(
-                minDriftHorizontalSpeed,
-                fullDriftHorizontalSpeed,
+                balance.minDriftHorizontalSpeed,
+                balance.fullDriftHorizontalSpeed,
                 lateralSpeed
             );
 
@@ -393,8 +373,8 @@ public class PlayerController : MonoBehaviour
         }
 
         float changeSpeed = targetDriftIntensity > driftIntensity
-            ? driftBuildSpeed
-            : driftFadeSpeed;
+            ? balance.driftBuildSpeed
+            : balance.driftFadeSpeed;
 
         driftIntensity = Mathf.MoveTowards(
             driftIntensity,
@@ -412,9 +392,9 @@ public class PlayerController : MonoBehaviour
 
         float velocityPercent = 0f;
 
-        if (maxHorizontalSpeed > 0f)
+        if (balance.maxHorizontalSpeed > 0f)
         {
-            velocityPercent = currentHorizontalVelocity / maxHorizontalSpeed;
+            velocityPercent = currentHorizontalVelocity / balance.maxHorizontalSpeed;
         }
 
         float inputStrength = Mathf.Abs(horizontalInput);
@@ -444,9 +424,9 @@ public class PlayerController : MonoBehaviour
 
         float roadDriftPercent = 0f;
 
-        if (isGrounded && Mathf.Abs(horizontalInput) < 0.01f && maxHorizontalSpeed > 0f)
+        if (isGrounded && Mathf.Abs(horizontalInput) < 0.01f && balance.maxHorizontalSpeed > 0f)
         {
-            roadDriftPercent = currentRoadDrift / maxHorizontalSpeed;
+            roadDriftPercent = currentRoadDrift / balance.maxHorizontalSpeed;
         }
 
         float visualDirectionPercent = Mathf.Abs(horizontalInput) > 0.01f
@@ -460,8 +440,8 @@ public class PlayerController : MonoBehaviour
 
         float driftDirection = GetDriftDirection();
 
-        targetSteerY += driftDirection * driftSideViewAngle * driftIntensity;
-        targetLeanZ += -driftDirection * driftExtraLeanAngle * driftIntensity;
+        targetSteerY += driftDirection * balance.driftSideViewAngle * driftIntensity;
+        targetLeanZ += -driftDirection * balance.driftExtraLeanAngle * driftIntensity;
 
         float wobbleFade = Mathf.Lerp(1f, wobbleInputFade, inputStrength);
 
