@@ -114,6 +114,18 @@ public class SceneTransitionManager : MonoBehaviour
             yield return null; // Wait 1 frame to ensure scene is loaded
         }
 
+        CurvedWorldController curvedWorld = Object.FindFirstObjectByType<CurvedWorldController>();
+        if (curvedWorld != null)
+        {
+            while (!curvedWorld.IsInitialized)
+            {
+                yield return null;
+            }
+        }
+
+        // Wait one more frame for shaders to render
+        yield return null;
+
         circleRect.DOKill();
 
         if (circleImage != null)

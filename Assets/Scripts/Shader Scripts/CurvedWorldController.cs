@@ -1,7 +1,9 @@
 using UnityEngine;
 
+[DefaultExecutionOrder(-1000)]
 public class CurvedWorldController : MonoBehaviour
 {
+    public bool IsInitialized { get; private set; }
     [Header("Curve Origin")]
     [SerializeField] private Transform curveOrigin;
 
@@ -34,14 +36,68 @@ public class CurvedWorldController : MonoBehaviour
     private static readonly int GlobalCurveSideStrengthId = Shader.PropertyToID("_GlobalCurveSideStrength");
     private static readonly int GlobalCurveStartDistanceId = Shader.PropertyToID("_GlobalCurveStartDistance");
 
-    private void Start()
+    private void Awake()
     {
-        currentDownCurve = baseDownCurveStrength;
-        currentSideCurve = 0f;
-
-        ApplyShaderValues();
+        InitializeCurve();
     }
 
+    private void OnEnable()
+    {
+        InitializeCurve();
+    }
+
+    private void InitializeCurve()
+    {
+        if (IsInitialized)
+        {
+            return;
+        }
+
+        if (curveOrigin == null)
+        {
+            Debug.LogError(
+                "Curve Origin is not assigned on CurvedWorldController.",
+                this
+            );
+
+            return;
+        }
+
+        curveTime = 0f;
+
+        CalculateTargetCurveValues(
+            out float initialDownCurve,
+            out float initialSideCurve
+        );
+
+        currentDownCurve = initialDownCurve;
+        currentSideCurve = initialSideCurve;
+
+        ApplyShaderValues();
+
+        IsInitialized = true;
+    }
+    private void CalculateTargetCurveValues(
+        out float targetDownCurve,
+        out float targetSideCurve)
+    {
+        float downNoise = Mathf.PerlinNoise(
+            curveTime * downCurveNoiseSpeed,
+            10.5f
+        );
+
+        float sideNoise = Mathf.PerlinNoise(
+            curveTime * sideCurveNoiseSpeed,
+            25.8f
+        );
+
+        targetDownCurve =
+            baseDownCurveStrength +
+            ((downNoise - 0.5f) * 2f * downCurveVariation);
+
+        targetSideCurve =
+            (sideNoise - 0.5f) * 2f * maxSideCurveStrength;
+    }
     private void LateUpdate()
     {
         if (curveOrigin == null)
@@ -73,11 +129,10 @@ public class CurvedWorldController : MonoBehaviour
 
         curveTime += Time.deltaTime * speedRatio;
 
-        float downNoise = Mathf.PerlinNoise(curveTime * downCurveNoiseSpeed, 10.5f);
-        float sideNoise = Mathf.PerlinNoise(curveTime * sideCurveNoiseSpeed, 25.8f);
-
-        float targetDownCurve = baseDownCurveStrength + ((downNoise - 0.5f) * 2f * downCurveVariation);
-        float targetSideCurve = (sideNoise - 0.5f) * 2f * maxSideCurveStrength;
+        CalculateTargetCurveValues(
+            out float targetDownCurve,
+            out float targetSideCurve
+        );
 
         float smoothAmount = curveSmoothSpeed * Time.deltaTime;
 
@@ -93,10 +148,19 @@ public class CurvedWorldController : MonoBehaviour
             smoothAmount
         );
     }
+    
 
     private void ApplyShaderValues()
     {
-        Shader.SetGlobalVector(CurveOriginId, curveOrigin.position);
+        if (curveOrigin != null)
+        {
+            Shader.SetGlobalVector(CurveOriginId, curveOrigin.position);
+        }
+        else
+        {
+            Shader.SetGlobalVector(CurveOriginId, Vector3.zero);
+        }
+
         Shader.SetGlobalFloat(GlobalCurveStrengthId, currentDownCurve);
         Shader.SetGlobalFloat(GlobalCurveSideStrengthId, currentSideCurve);
         Shader.SetGlobalFloat(GlobalCurveStartDistanceId, curveStartDistance);
