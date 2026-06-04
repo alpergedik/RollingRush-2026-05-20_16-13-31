@@ -12613,7 +12613,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &689248697
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12627,9 +12627,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ObstacleSpawner
   obstaclePrefabs:
-  - {fileID: 4355200390086549899, guid: c843f2f004e98e24baae82e8c9ac408c, type: 3}
-  - {fileID: 4355200390086549899, guid: 5ca2b756f53e92440a3890cdf641eca8, type: 3}
-  - {fileID: 4355200390086549899, guid: 76918e637e34842429ab68701e553ae9, type: 3}
+  - {fileID: 2833136247299137904, guid: ff5758e551bed438a9d3695edd962ae5, type: 3}
+  - {fileID: 7887238723136168751, guid: d5630473d77064e6e9bffe071f59a8f7, type: 3}
+  - {fileID: 4986814130046939465, guid: 15c9d0e6f975b49ca91926751f16dfea, type: 3}
+  - {fileID: 4611444932204211267, guid: e53cd67a3fa5a4aacbd5a893e5629ce7, type: 3}
   poolSizePerPrefab: 9
   spawnZ: 180
   spawnY: 0
@@ -12747,7 +12748,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &728619272
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13370,7 +13371,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &928853868
 RectTransform:
   m_ObjectHideFlags: 0
@@ -21222,6 +21223,7 @@ SceneRoots:
   - {fileID: 330585546}
   - {fileID: 410087041}
   - {fileID: 832575519}
+  - {fileID: 1666288079}
   - {fileID: 263508313}
   - {fileID: 528706181}
   - {fileID: 1534485640}
@@ -21244,4 +21246,3 @@ SceneRoots:
   - {fileID: 1866631357}
   - {fileID: 370001840}
   - {fileID: 1416897537}
-  - {fileID: 1666288079}

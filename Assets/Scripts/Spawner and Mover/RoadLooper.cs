@@ -56,6 +56,12 @@ public class RoadLooper : MonoBehaviour
                     road.position.y,
                     furthestZ + segmentLength
                 );
+
+                RoadSegmentSpawner spawner = road.GetComponent<RoadSegmentSpawner>();
+                if (spawner != null)
+                {
+                    spawner.RefreshSegmentSpawns();
+                }
             }
         }
     }

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e54e5f9c5050249b4ab3cd9a8672549d, type: 3}
   m_Name: GameBalanceConfig
   m_EditorClassIdentifier: Assembly-CSharp::GameBalanceConfig
-  activeProfile: 1
+  activeProfile: 0
   easyProfile:
     defaultSpeed: 3
     boostSpeed: 5
@@ -62,7 +62,7 @@ MonoBehaviour:
   hardProfile:
     defaultSpeed: 8
     boostSpeed: 10
-    brakeSpeed: 6
+    brakeSpeed: 4
     speedChangeRate: 5
     maxHorizontalSpeed: 5
     horizontalAcceleration: 13

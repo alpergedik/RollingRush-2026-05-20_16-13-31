@@ -6,23 +6,7 @@ public class ObstacleMover : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if (GameManager.Instance != null && GameManager.Instance.isGameOver)
-        {
-            return;
-        }
-
-        float speed = 8f;
-
-        if (GameManager.Instance != null)
-        {
-            speed = GameManager.Instance.currentSpeed;
-        }
-
-        transform.position += Vector3.back * speed * Time.fixedDeltaTime;
-
-        if (transform.position.z <= disableZ)
-        {
-            gameObject.SetActive(false);
-        }
+        // Movement is now handled by RoadLooper moving the entire RoadSegment
+        // The disableZ logic is also handled by RoadSegmentSpawner.ClearSpawnedObjects()
     }
 }

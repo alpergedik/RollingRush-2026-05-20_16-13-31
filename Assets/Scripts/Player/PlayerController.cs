@@ -700,9 +700,11 @@ public class PlayerController : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-        if (collision.gameObject.CompareTag("Obstacle"))
+        ObstacleMarker obstacle = collision.collider.GetComponentInParent<ObstacleMarker>();
+
+        if (obstacle != null)
         {
-            PlayCrashAnimation(collision);
+            TriggerGameOverFromObstacle(collision);
             return;
         }
 
@@ -751,6 +753,21 @@ public class PlayerController : MonoBehaviour
         {
             currentHorizontalVelocity = 0f;
         }
+    }
+
+    private void TriggerGameOverFromObstacle(Collision collision)
+    {
+        if (GameManager.Instance == null)
+        {
+            return;
+        }
+
+        if (!GameManager.Instance.isGameStarted || GameManager.Instance.isGameOver)
+        {
+            return;
+        }
+
+        PlayCrashAnimation(collision);
     }
     
     private void PlayCrashAnimation(Collision collision)
